@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0E1A14">
+<meta name="robots" content="noindex">
+<title>KM Express Admin</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Sora:wght@600;700&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body class="admin">
+
+<div id="login" class="loginwrap">
+  <form id="loginForm" class="logincard" autocomplete="off">
+    <div class="brand"><span class="logo" data-icon="shield" data-size="20"></span><div><b id="brandName"></b><small>Admin console</small></div></div>
+    <div><h1>Admin sign in</h1><p class="muted sm-t" style="margin-top:4px">Enter the admin PIN to manage orders, riders, cash and settings.</p></div>
+    <div class="field"><label for="pin">Admin PIN</label><input id="pin" type="password" inputmode="numeric" required placeholder="PIN" autocomplete="current-password"></div>
+    <div class="err" id="loginErr" role="alert"></div>
+    <button class="btn block" type="submit">Sign in</button>
+  </form>
+</div>
+
+<div id="shell" class="shell" hidden>
+  <aside class="side">
+    <div>
+      <div class="brand"><span class="logo" data-icon="truck" data-size="20"></span><div><b id="brandName2"></b><small>Admin console</small></div></div>
+      <nav class="nav" id="nav"></nav>
+    </div>
+    <div class="foot">
+      <button id="installBtn" class="btn sec sm" type="button" hidden data-icon="download" data-size="16">Install app</button>
+      <button id="logout" class="btn sec sm" type="button" data-icon="logout" data-size="16">Sign out</button>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar"><h1 id="vtitle">Overview</h1><div class="live"><i></i><span id="openTxt">Live</span></div></header>
+    <div class="page">
+      <div class="demo-banner" id="demo" hidden>Demo mode with sample data (sample IPs use a reserved test range). Everything is stored only in this browser.</div>
+
+      <section id="v-overview" class="stack">
+        <div id="alerts" class="stack"></div>
+        <div class="kpis" id="kpis"></div>
+        <div class="grid2">
+          <div class="panel"><header><h2>Live deliveries</h2><span class="muted sm-t" id="liveCount"></span></header><div class="tbl" id="liveTbl"></div></div>
+          <div class="panel"><header><h2>Riders</h2><span class="muted sm-t" id="riderCount"></span></header><div class="body" id="riderPanel"></div></div>
+        </div>
+      </section>
+
+      <section id="v-orders" class="stack" hidden>
+        <div class="toolbar"><div class="chips" id="ofilter"></div><input class="search" id="osearch" type="search" placeholder="Search order, name, phone, rider, IP" aria-label="Search orders"></div>
+        <div class="panel"><div class="tbl" id="oTbl"></div></div>
+      </section>
+
+      <section id="v-customers" class="stack" hidden>
+        <div class="toolbar"><div class="chips" id="cufilter"></div><input class="search" id="cusearch" type="search" placeholder="Search name, phone, IP, device" aria-label="Search customers"></div>
+        <div class="panel"><div class="tbl" id="cuTbl"></div></div>
+      </section>
+
+      <section id="v-riders" class="stack" hidden>
+        <form id="rform" class="panel" autocomplete="off">
+          <header><h2>Register a rider</h2><span class="muted sm-t">The rider signs in with this mobile number and the PIN you choose.</span></header>
+          <div class="body stack">
+            <div class="formgrid">
+              <div class="field"><label for="rname">Full name</label><input id="rname" required placeholder="e.g. Usman Ali"></div>
+              <div class="field"><label for="rphone">Mobile number</label><input id="rphone" type="tel" inputmode="tel" required placeholder="03xx xxxxxxx"></div>
+              <div class="field"><label for="rpin">PIN (4 to 8 digits)</label><div style="display:flex;gap:8px"><input id="rpin" inputmode="numeric" required placeholder="Choose a PIN" maxlength="8"><button class="btn sec" id="genPin" type="button">Random</button></div></div>
+              <button class="btn" type="submit" data-icon="plus" data-size="16">Register rider</button>
+            </div>
+            <div class="err" id="rerr" role="alert"></div>
+            <div class="hint">PINs are stored as a secure hash, so nobody can read them later. Write the PIN down before you share it with the rider.</div>
+          </div>
+        </form>
+        <div class="panel"><header><h2>All riders</h2><span class="muted sm-t" id="rcount"></span></header><div class="tbl" id="rTbl"></div></div>
+      </section>
+
+      <section id="v-cash" class="stack" hidden>
+        <div class="kpis" id="cashKpis"></div>
+        <div class="panel"><header><h2>Cash with riders</h2><span class="muted sm-t">Collected = delivery fee + shop bill of delivered orders</span></header><div class="tbl" id="cashTbl"></div></div>
+        <div class="grid2">
+          <div class="panel"><header><h2>Deposits received</h2></header><div class="tbl" id="depTbl"></div></div>
+          <div class="panel"><header><h2>Failed orders</h2><span class="muted sm-t">Items bought but not delivered</span></header><div class="tbl" id="failTbl"></div></div>
+        </div>
+      </section>
+
+      <section id="v-security" class="stack" hidden>
+        <div class="panel"><header><h2>Security alerts</h2><span class="muted sm-t">A fraud-marked person opened the app or tried to order, or a rider pressed emergency</span></header><div class="tbl" id="alTbl"></div></div>
+        <div class="panel"><header><h2>Fraud list</h2><span class="muted sm-t">Mark a customer as fraud from the Customers tab or an order</span></header><div class="tbl" id="frTbl"></div></div>
+        <div class="panel"><header><h2>Recent app opens</h2><span class="muted sm-t">Location, IP and device each time a customer opens the app</span></header><div class="tbl" id="viTbl"></div></div>
+      </section>
+
+      <section id="v-map" class="stack" hidden>
+        <div class="panel"><header><h2>Service area, riders and drop-offs</h2><span class="muted sm-t">Dashed circle: service area. Green: riders. Dark: customers.</span></header><div class="body"><div id="bigmap" class="map tall"></div><div class="hint" id="mapNote" style="margin-top:10px"></div></div></div>
+      </section>
+
+      <section id="v-complaints" class="stack" hidden>
+        <div class="chips" id="cfilter"></div>
+        <div class="panel"><div class="tbl" id="cTbl"></div></div>
+      </section>
+
+      <section id="v-reports" class="stack" hidden>
+        <div class="toolbar"><select id="range" style="max-width:220px" aria-label="Date range"><option value="today">Today</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="all">All time</option></select>
+          <button id="csv" class="btn sec sm" type="button" data-icon="download" data-size="16">Download CSV</button></div>
+        <div class="kpis" id="rkpis"></div>
+        <div class="panel"><header><h2>Rider performance</h2></header><div class="tbl" id="perfTbl"></div></div>
+        <div class="panel"><header><h2>Order history</h2></header><div class="tbl" id="histTbl"></div></div>
+      </section>
+
+      <section id="v-settings" class="stack" hidden>
+        <form id="sform" class="stack" autocomplete="off">
+          <div class="panel"><header><h2>Service</h2></header><div class="body setgrid">
+            <label class="toggle"><input type="checkbox" id="s_accepting"> Accepting orders</label>
+            <div class="field"><label for="s_openFrom">Open from (hour, 0 to 23)</label><input id="s_openFrom" type="number" min="0" max="23"></div>
+            <div class="field"><label for="s_openTo">Open until (hour, 1 to 24)</label><input id="s_openTo" type="number" min="1" max="24"></div>
+            <div class="field"><label for="s_appName">App name</label><input id="s_appName"></div>
+            <div class="field"><label for="s_supportPhone">Support phone</label><input id="s_supportPhone"></div>
+            <div class="field"><label for="s_supportWhatsapp">Support WhatsApp (92...)</label><input id="s_supportWhatsapp"></div>
+          </div></div>
+          <div class="panel"><header><h2>Money and limits</h2></header><div class="body setgrid">
+            <div class="field"><label for="s_deliveryFee">Delivery fee (Rs)</label><input id="s_deliveryFee" type="number" min="0"></div>
+            <div class="field"><label for="s_riderShare">Rider earning per delivery (Rs)</label><input id="s_riderShare" type="number" min="0"></div>
+            <div class="field"><label for="s_cashLimit">Alert when rider cash exceeds (Rs)</label><input id="s_cashLimit" type="number" min="0"></div>
+            <div class="field"><label for="s_maxActivePerCustomer">Max open orders per customer</label><input id="s_maxActivePerCustomer" type="number" min="1"></div>
+            <div class="field"><label for="s_maxActivePerRider">Max orders a rider can carry</label><input id="s_maxActivePerRider" type="number" min="1"></div>
+          </div></div>
+          <div class="panel"><header><h2>Service area (Kot Momin)</h2></header><div class="body stack">
+            <div class="setgrid">
+              <div class="field"><label for="s_lat">Centre latitude</label><input id="s_lat" type="number" step="0.00001"></div>
+              <div class="field"><label for="s_lng">Centre longitude</label><input id="s_lng" type="number" step="0.00001"></div>
+              <div class="field"><label for="s_radiusKm">Radius (km)</label><input id="s_radiusKm" type="number" step="0.1" min="0.5"></div>
+              <div class="field"><label for="s_speedKmh">Average rider speed (km/h)</label><input id="s_speedKmh" type="number" min="5"></div>
+            </div>
+            <div class="field"><label for="s_areas">Areas / mohallas customers can pick (one per line)</label><textarea id="s_areas" rows="6"></textarea></div>
+            <div class="hint">Customers outside this circle cannot open the app or place orders. Centre defaults to Kot Momin city centre (32.18833 N, 73.02861 E).</div>
+          </div></div>
+          <div class="panel"><header><h2>Admin PIN</h2></header><div class="body setgrid">
+            <div class="field"><label for="s_pin1">New admin PIN (6 to 8 digits)</label><input id="s_pin1" type="password" inputmode="numeric" placeholder="Leave empty to keep"></div>
+            <div class="field"><label for="s_pin2">Repeat new PIN</label><input id="s_pin2" type="password" inputmode="numeric"></div>
+          </div></div>
+          <div class="err" id="serr" role="alert"></div>
+          <div><button class="btn" type="submit">Save settings</button></div>
+        </form>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

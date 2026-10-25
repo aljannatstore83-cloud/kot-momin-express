@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#C2410C">
+<meta name="robots" content="noindex">
+<title>KM Express Rider</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Sora:wght@600;700&family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<!-- SIGN IN -->
+<div id="login" class="loginwrap">
+  <form id="loginForm" class="logincard" autocomplete="off" novalidate>
+    <div class="row"><div class="brand"><span class="logo" data-icon="truck" data-size="20"></span><div><b id="brandName"></b><small data-t="r_app"></small></div></div>
+      <button class="langbtn" type="button" id="lang1" data-t="lang_btn"></button></div>
+    <div><h1 data-t="r_signin"></h1><p class="muted sm-t" style="margin-top:4px" data-t="r_signin_text"></p></div>
+    <div class="field"><label for="phone" data-t="f_phone"></label><input id="phone" type="tel" inputmode="tel" required placeholder="03xx xxxxxxx" autocomplete="username"></div>
+    <div class="field"><label for="pin" data-t="r_pin"></label><input id="pin" type="password" inputmode="numeric" required data-tp="r_pin_ph" autocomplete="current-password"></div>
+    <div class="err" id="loginErr" role="alert"></div>
+    <button class="btn block" type="submit" data-t="r_signin"></button>
+    <button id="installBtn" class="btn sec block" type="button" hidden><span data-t="install"></span></button>
+    <div class="installhint" id="instHint" data-t="install_hint"></div>
+    <div class="hint" id="demoHint" hidden data-t="r_demo"></div>
+  </form>
+</div>
+
+<!-- APP -->
+<div id="app" class="app" hidden>
+  <header class="appbar">
+    <div class="brand"><span class="av" id="meAv"></span><div><b id="meName"></b><small id="meSub"></small></div></div>
+    <button id="onlineBtn" class="switch" type="button" aria-pressed="false"><span id="onlineTxt"></span><span class="knob"></span></button>
+  </header>
+
+  <main class="content">
+    <div class="gps" id="gps"><i></i><span id="gpsTxt"></span></div>
+    <label class="hint" id="simRow" hidden style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="sim" style="width:auto;min-height:0"><span data-t="sim_label"></span></label>
+    <div id="list" class="stack"></div>
+  </main>
+
+  <nav class="tabbar" id="tabs" aria-label="Main">
+    <button class="tab on" data-f="avail" type="button" data-icon="list" data-size="22"><span data-t="tab_avail"></span><span class="bd" id="bdA" hidden>0</span></button>
+    <button class="tab" data-f="active" type="button" data-icon="bolt" data-size="22"><span data-t="tab_active"></span><span class="bd" id="bdB" hidden>0</span></button>
+    <button class="tab" data-f="wallet" type="button" data-icon="wallet" data-size="22"><span data-t="tab_wallet"></span></button>
+  </nav>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+rules_version = '2';
+// Kot Momin Express: starter security rules.
+// Yeh rules sab se khatarnak cheezein rokti hain (order delete, order ki fees/phone/code badalna).
+// Mukammal hifazat ke liye agla step: Firebase Authentication (admin email login + rider login),
+// phir neeche "TODO auth" wali lines sakht karni hain. README mein tafseel hai.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function unchanged(f) { return !(f in request.resource.data) || request.resource.data[f] == resource.data[f]; }
+
+    match /orders/{id} {
+      allow read: if true;
+      // Naya order sirf "new" status ke saath, fee number honi chahiye, code ka hash lazmi
+      allow create: if request.resource.data.status == "new"
+        && request.resource.data.fee is number
+        && request.resource.data.otpHash is string
+        && request.resource.data.riderId == ""
+        && request.resource.data.phone is string;
+      // Order ki bunyadi cheezein (phone, fee, code, number, waqt) koi nahi badal sakta
+      allow update: if unchanged("phone") && unchanged("fee") && unchanged("otpHash") && unchanged("no") && unchanged("createdAt") && unchanged("device") && unchanged("ip");
+      allow delete: if false;
+    }
+
+    match /messages/{id} {
+      allow read, create: if true;
+      allow update, delete: if false;
+    }
+
+    match /complaints/{id} {
+      allow read, create: if true;
+      allow update: if true;   // TODO auth: sirf admin
+      allow delete: if false;
+    }
+
+    // TODO auth: neeche wali collections mein likhna sirf admin ke liye hona chahiye
+    match /riders/{id}      { allow read: if true; allow create, update: if true; allow delete: if true; }
+    match /settlements/{id} { allow read: if true; allow create: if true; allow update, delete: if false; }
+    match /blocks/{id}      { allow read: if true; allow create, delete: if true; allow update: if false; }
+    match /settings/{id}    { allow read: if true; allow write: if true; }
+  }
+}

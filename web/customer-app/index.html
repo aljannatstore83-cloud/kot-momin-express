@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B7A4B">
+<title>Kot Momin Express</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Sora:wght@600;700&family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<!-- LOCATION GATE: app location ke baghair nahi chalti -->
+<div id="gate" class="gate">
+  <button class="langbtn" id="gLang" type="button" data-t="lang_btn"></button>
+  <div class="ring" data-icon="pin" data-size="42"></div>
+  <h1 id="gTitle"></h1>
+  <p id="gText"></p>
+  <div class="msg" id="gMsg" role="status" hidden></div>
+  <button class="btn" id="gBtn" type="button"></button>
+  <button class="btn ghostw" id="gDemo" type="button" hidden data-t="gate_demo"></button>
+  <div class="note" data-t="gate_note"></div>
+</div>
+
+<div class="app" id="app" hidden>
+  <header class="appbar">
+    <div class="brand"><span class="logo" data-icon="truck" data-size="20"></span><div><b id="brandName"></b><small data-t="brand_tag"></small></div></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button id="installBtn" class="btn sm soft" type="button" hidden><span data-t="install"></span></button>
+      <button class="langbtn" id="lang" type="button" data-t="lang_btn"></button>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="demo-banner" id="demo" hidden data-t="demo_banner"></div>
+
+    <!-- HOME -->
+    <section id="v-home" class="stack">
+      <div class="greet"><h1 id="hello"></h1><p data-t="home_q"></p></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="locchip"><span data-icon="pin" data-size="14"></span><span data-t="loc_chip"></span></span><span id="trustHome"></span></div>
+      <div id="closedBox"></div>
+      <div class="cats" id="cats"></div>
+      <button class="wide" id="parcelBtn" type="button">
+        <span class="ci c6" data-icon="package" data-size="22"></span>
+        <span class="grow"><b data-t="cat_parcel"></b><small data-t="parcel_sub"></small></span>
+        <span class="flip" data-icon="chev"></span>
+      </button>
+      <div id="againWrap" class="stack" hidden><div class="sec-title" data-t="again_title"></div><div class="hscroll" id="again"></div></div>
+      <div class="stack">
+        <div class="sec-title" data-t="how_title"></div>
+        <div class="how"><div><b>1</b><span data-t="how1"></span></div><div><b>2</b><span data-t="how2"></span></div><div><b>3</b><span data-t="how3"></span></div></div>
+        <div class="hint" id="feeNote"></div>
+      </div>
+    </section>
+
+    <!-- NEW ORDER -->
+    <section id="v-new" class="stack" hidden>
+      <div class="pagehead"><button class="iconbtn flip" id="newBack" type="button" data-icon="back" aria-label="Back"></button><h2 id="newTitle"></h2></div>
+      <form id="form" class="card form" novalidate>
+        <div class="field"><label for="items" id="itemsLabel"></label><textarea id="items"></textarea></div>
+        <div class="field" id="chipsBox"><label data-t="quick_title"></label><div class="chipsq" id="chips"></div></div>
+        <div class="attach">
+          <button type="button" class="attbtn" id="voiceBtn"><span data-icon="mic" data-size="17"></span><span id="voiceTxt"></span></button>
+          <label class="attbtn" id="photoBtn"><span data-icon="camera" data-size="17"></span><span id="photoTxt"></span><input type="file" accept="image/*" id="photoIn"></label>
+        </div>
+        <div class="hint" data-t="f_voice_hint"></div>
+        <div id="attPrev" class="stack"></div>
+        <div class="field" id="shopBox"><label for="shop"><span data-t="f_shop"></span> <span class="opt" data-t="optional"></span></label><input id="shop" data-tp="f_shop_ph"></div>
+        <div class="field" id="pickupBox" hidden><label for="pickup" data-t="f_pickup"></label><input id="pickup" data-tp="f_pickup_ph"></div>
+        <div class="field" id="estBox"><label for="estimate" data-t="f_est"></label><input id="estimate" inputmode="numeric" placeholder="0"><div class="hint" data-t="f_est_hint"></div></div>
+        <div class="field"><label for="area" data-t="f_area"></label><select id="area" required></select></div>
+        <div class="field"><label for="address" data-t="f_address"></label><input id="address" required data-tp="f_address_ph"></div>
+        <div class="row" style="align-items:flex-start">
+          <div class="hint ok" id="gpsLine" style="display:flex;gap:6px;align-items:center"></div>
+          <button type="button" class="btn sec sm" id="adjBtn"><span data-icon="pin" data-size="15"></span><span data-t="f_adjust"></span></button>
+        </div>
+        <div id="pickmap" class="map" hidden></div>
+        <div class="hint" id="pinHint" hidden data-t="f_pin_hint"></div>
+        <div class="two">
+          <div class="field"><label for="name" data-t="f_name"></label><input id="name" required autocomplete="name"></div>
+          <div class="field"><label for="phone" data-t="f_phone"></label><input id="phone" type="tel" inputmode="tel" required placeholder="03xx xxxxxxx" autocomplete="tel"></div>
+        </div>
+        <div class="field"><label for="note"><span data-t="f_note"></span> <span class="opt" data-t="optional"></span></label><input id="note" data-tp="f_note_ph"></div>
+        <div class="summary">
+          <div class="row"><span data-t="sum_fee"></span><b id="sFee"></b></div>
+          <div class="row" id="sItemsRow"><span data-t="sum_items"></span><span id="sItems"></span></div>
+          <div class="row total"><span data-t="sum_total"></span><span id="sTotal"></span></div>
+          <div class="row"><span data-t="sum_pay"></span><span data-t="cash"></span></div>
+        </div>
+        <div class="hint" style="display:flex;gap:8px"><span data-icon="lock" data-size="15"></span><span data-t="code_info"></span></div>
+        <div class="err" id="formErr" role="alert"></div>
+        <button class="btn block" id="send" type="submit" data-t="place"></button>
+      </form>
+    </section>
+
+    <!-- ORDERS -->
+    <section id="v-orders" class="stack" hidden>
+      <div class="pagehead"><h2 data-t="orders_title"></h2></div>
+      <div id="olist" class="stack"></div>
+      <div class="empty" id="none" hidden>
+        <div class="ei" data-icon="package" data-size="26"></div>
+        <h3 data-t="none_title"></h3><p class="sm-t" data-t="none_text"></p>
+        <button class="btn" id="startBtn" type="button" style="margin-top:14px" data-t="start_order"></button>
+      </div>
+    </section>
+
+    <!-- TRACK ONE ORDER -->
+    <section id="v-track" class="stack" hidden>
+      <div class="pagehead">
+        <button class="iconbtn flip" id="trBack" type="button" data-icon="back" aria-label="Back"></button>
+        <div style="flex:1;min-width:0"><h2 id="trNo" class="ono"></h2><div class="muted xs-t" id="trAgo"></div></div>
+        <span id="trPill"></span>
+      </div>
+      <div class="card ocard">
+        <div class="etabox" id="trEta"><div class="etamin" id="trBig"></div><div class="etasub" id="trSub"></div></div>
+        <div class="steps" id="trSteps"></div>
+        <div id="tmap" class="map tmap" hidden></div>
+      </div>
+      <div class="arrive" id="trArrive" hidden><div class="ei" data-icon="bell" data-size="22"></div><div><b data-t="arrived_title"></b><small data-t="arrived_sub"></small></div></div>
+      <div class="codebox" id="trCode" hidden>
+        <div><div class="lb" data-t="code_title"></div><small data-t="code_text"></small></div>
+        <div class="code" id="trCodeVal"></div>
+      </div>
+      <div class="billbox card" id="trBill" hidden></div>
+      <div class="paybox" id="trPay" hidden></div>
+      <div class="rcard card" id="trRider" hidden>
+        <div class="av" id="trAv"></div>
+        <div class="grow"><div class="nm" id="trRname"></div><div class="sub" data-t="your_rider"></div></div>
+        <a class="iconbtn" id="trCall" aria-label="Call"></a>
+        <button type="button" class="iconbtn" id="trChat" aria-label="Chat"></button>
+      </div>
+      <div class="card"><dl class="meta" id="trMeta"></dl></div>
+      <div class="card stack" id="trRate" hidden>
+        <b style="text-align:center" data-t="rate_title"></b>
+        <div class="stars" id="stars"></div>
+        <button class="btn block" id="rateBtn" type="button" disabled data-t="rate_send"></button>
+      </div>
+      <div class="oactions">
+        <button type="button" class="btn soft sm" id="trReorder" hidden><span data-t="reorder"></span></button>
+        <button type="button" class="btn sec sm" id="trReport"><span data-icon="alert" data-size="15"></span><span data-t="report"></span></button>
+        <button type="button" class="btn danger sm" id="trCancel" hidden><span data-t="cancel_order"></span></button>
+      </div>
+    </section>
+
+    <!-- ACCOUNT -->
+    <section id="v-account" class="stack" hidden>
+      <div class="card trustcard" id="trustCard"></div>
+      <form id="pform" class="card form">
+        <b data-t="acc_profile"></b>
+        <div class="two">
+          <div class="field"><label for="pname" data-t="f_name"></label><input id="pname"></div>
+          <div class="field"><label for="pphone" data-t="f_phone"></label><input id="pphone" type="tel" inputmode="tel"></div>
+        </div>
+        <div class="field"><label for="parea" data-t="f_area"></label><select id="parea"></select></div>
+        <div class="field"><label for="paddress" data-t="f_address"></label><input id="paddress"></div>
+        <button class="btn sec" type="submit" data-t="save"></button>
+      </form>
+      <div class="card row"><b data-t="acc_lang"></b><div class="seg" style="min-width:180px"><button type="button" data-l="en">English</button><button type="button" data-l="ur">اردو</button></div></div>
+      <div class="card stack">
+        <div><b data-t="help_title"></b><div class="muted sm-t" id="hoursTxt"></div></div>
+        <div class="locrow"><a id="supCall" class="btn soft sm"><span data-icon="phone" data-size="15"></span><span data-t="call_support"></span></a><a id="supWa" class="btn soft sm" target="_blank" rel="noopener"><span data-icon="message" data-size="15"></span><span data-t="whatsapp"></span></a></div>
+      </div>
+      <form id="cform" class="card form">
+        <div><b data-t="cmp_title"></b><div class="muted sm-t" data-t="cmp_text"></div></div>
+        <div class="field"><label for="corder" data-t="cmp_order"></label><select id="corder"></select></div>
+        <div class="field"><label for="ctext" data-t="cmp_what"></label><textarea id="ctext" required></textarea></div>
+        <button class="btn block" type="submit" data-t="cmp_send"></button>
+      </form>
+      <div class="card" id="instCard"><b data-t="install"></b><p class="installhint" style="margin-top:4px" data-t="install_hint"></p></div>
+      <div class="card"><b data-t="privacy_title"></b><p class="muted sm-t" style="margin-top:4px" data-t="privacy_text"></p></div>
+    </section>
+  </main>
+
+  <nav class="tabbar" id="tabs" aria-label="Main">
+    <button class="tab on" data-v="home" type="button" data-icon="home" data-size="22"><span data-t="tab_home"></span></button>
+    <button class="tab" data-v="orders" type="button" data-icon="package" data-size="22"><span data-t="tab_orders"></span><span class="bd" id="badge" hidden>0</span></button>
+    <button class="tab" data-v="account" type="button" data-icon="user" data-size="22"><span data-t="tab_account"></span></button>
+  </nav>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
