@@ -4,7 +4,8 @@ set -euo pipefail
 APP="$1"
 ROOT="$(pwd)"
 if [ "$APP" = "customer" ]; then ID="pk.kotmomin.express"; NAME="Kot Momin Express"; SRC="$ROOT/web/customer-app"; BG="#0B7A4B"
-else ID="pk.kotmomin.express.rider"; NAME="KM Rider"; SRC="$ROOT/web/rider-app"; BG="#C2410C"; fi
+elif [ "$APP" = "rider" ]; then ID="pk.kotmomin.express.rider"; NAME="KM Rider"; SRC="$ROOT/web/rider-app"; BG="#C2410C"
+else ID="pk.kotmomin.express.admin"; NAME="KM Admin"; SRC="$ROOT/web/admin-web"; BG="#0E1A14"; fi
 W="$ROOT/build/$APP"
 rm -rf "$W"; mkdir -p "$W"; cd "$W"
 

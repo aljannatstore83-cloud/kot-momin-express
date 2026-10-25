@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [customer, rider]
+        app: [customer, rider, admin]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
