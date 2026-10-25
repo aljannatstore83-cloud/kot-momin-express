@@ -26,6 +26,10 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // App kholne ka record aur security alerts
+    match /visits/{id} { allow read, create: if true; allow update, delete: if false; }
+    match /alerts/{id} { allow read, create: if true; allow update: if true; allow delete: if false; }
+
     match /complaints/{id} {
       allow read, create: if true;
       allow update: if true;   // TODO auth: sirf admin
