@@ -53,6 +53,14 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Orders ki tasveerein aur awaz (alag rakhi jati hain taake orders halke rahein)
+    match /media/{id} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if request.resource.data.data is string && request.resource.data.data.size() < 1000000 && request.resource.data.kind is string;
+      allow update, delete: if false;
+    }
+
     // TODO auth: neeche wali collections mein likhna sirf admin ke liye hona chahiye
     match /riders/{id}      { allow read: if true; allow create, update: if true; allow delete: if true; }
     match /settlements/{id} { allow read: if true; allow create: if true; allow update, delete: if false; }

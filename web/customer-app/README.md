@@ -24,9 +24,10 @@ Teeno aik hi Firebase database istemal karti hain, is liye aapas mein jure rehte
 - Pehli dafa: Admin > KYC mein apna KYC password banayein (kam az kam 8 harf, harf aur number dono). Yeh password likh kar sambhal lein: bhool gaye to purane documents nahi khulenge.
 
 ## Service area aur map
-- Kot Momin ke markaz se **har taraf barabar 5.5 km** ka gol daira. Bahar wala customer app nahi chala sakta, map par dikhta hai ke woh kitna door hai.
-- Hamara apna map: daire ke bahar ka hissa dhundla, markaz ka nishan, "5.5 km" label; customer, rider aur admin teeno mein.
-- Settings > Service area mein radius aur markaz badal sakte hain. Shehar ke beech khade ho kar "Use my current location as the centre" dabayein.
+- Kot Momin ke markaz se **har taraf barabar** gol daira (shuru mein 5.5 km). Bahar wala customer app nahi chala sakta, map par dikhta hai ke woh kitna door hai.
+- **Admin > Settings > Service area:** map par slider se radius 0.5 se 50 km tak, markaz ko ungli se kheench kar ya map par tap kar ke badlein. Hare nuqte = pichle orders, narangi nuqte = jo log daire ke bahar se app khol rahe hain. "Save service area" dabayein, sab apps mein foran lag jata hai.
+- **Admin > Live map:** online riders (khaali bhi), chalte orders, aaj ke orders, security alerts; riders aur orders ki list; nishan par click se order khulta hai. Order assign karte waqt riders customer se doori ke hisaab se nazar aate hain.
+- Har map mein full screen, "meri location" aur "poora daira" buttons. Customer apna pin kheench kar laga sakta hai. Rider ko agle customer tak line nazar aati hai.
 
 ## Customer app mein kya hai
 - Location on kiye baghair app nahi khulti; sirf service area mein order hota hai
@@ -50,6 +51,13 @@ Teeno aik hi Firebase database istemal karti hain, is liye aapas mein jure rehte
 ## Admin
 Riders register karna, block karna, **fraud mark karna** (number, phone, IP aur KYC ho to CNIC bhi), KYC review, Security tab (fraud wala banda app khole ya KYC bheje to alert + location), police report (KYC ho to CNIC ke saath), cash hisaab, settings.
 Admin PIN: **786512** (Settings se badal sakte hain)
+
+## Launch ke liye
+- Website ka pehla page customers ke liye: Android app download (APK), iPhone ka tareeqa, madad ka number. Privacy policy: `privacy.html`.
+- Phone ka "back" button app ke andar pichli screen par le jata hai (dialog pehle band hota hai).
+- Tasveerein aur awaz alag rakhi jati hain (orders halke), rider sirf naye aur apne orders load karta hai: free Firebase ki roz ki had mein rehne ke liye.
+- Admin mein "Sound alerts": order 3 minute se rider ke baghair pada ho to har minute awaz; laptop par Chrome notification.
+- Hadd: app band ho to notification nahi aati (us ke liye Firebase ka paid plan aur server chahiye). Riders duty ke dauran app khuli rakhein.
 
 ## Kaun se phone par chalegi
 - Android 5.1 aur us se upar (APK), iPhone par Safari se "Add to Home Screen"
