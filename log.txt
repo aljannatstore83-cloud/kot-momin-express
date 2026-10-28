@@ -1,0 +1,15 @@
+home map: tiles ok
+track map: tiles ok
+track full screen class: True
+pin map: tiles ok
+pin moved: Your GPS location is attached (±5 m)
+gate map: tiles ok
+gate text: Kot Momin Express delivers within 5.5 km of Kot Momin city centre. You are 9.2 km from the centre.
+rider map: tiles ok
+rider map svg paths (mask, circle, route): 11
+admin map: tiles ok
+riders list: UA Usman Ali Position just now · cash Rs 450 On delivery BA Bilal Ahmad Position just now · cash Rs 270 On delivery AR Ali Raza Position 2 min ago · cash Rs 0 Online HK Hamza Khan Offline · cash Rs 0 Offline
+editor map: tiles ok
+radius after slide: 8 | stats: 201 km² area 11 of 11 past orders inside 0 past orders would be outside 0 recent app opens from outside Furthest order 1.5 km Not saved yet
+centre moved by tap: 32.18833 -> 32.19829
+saved area: 5.5 km, radiusSet True
