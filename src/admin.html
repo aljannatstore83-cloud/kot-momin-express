@@ -1,0 +1,1246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0E1A14">
+<meta name="robots" content="noindex">
+<title>KM Express Admin</title>
+<link rel="manifest" href="manifest-admin.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="KM Admin">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Sora:wght@600;700&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body class="admin">
+
+<div id="login" class="loginwrap">
+  <form id="loginForm" class="logincard" autocomplete="off">
+    <div class="brand"><span class="logo" data-icon="shield" data-size="20"></span><div><b id="brandName"></b><small>Admin console</small></div></div>
+    <div><h1>Admin sign in</h1><p class="muted sm-t" style="margin-top:4px">Enter the admin PIN to manage orders, riders, cash and settings.</p></div>
+    <div class="field"><label for="pin">Admin PIN</label><input id="pin" type="password" inputmode="numeric" required placeholder="PIN" autocomplete="current-password"></div>
+    <div class="err" id="loginErr" role="alert"></div>
+    <button class="btn block" type="submit">Sign in</button>
+  </form>
+</div>
+
+<div id="shell" class="shell" hidden>
+  <aside class="side">
+    <div>
+      <div class="brand"><span class="logo" data-icon="truck" data-size="20"></span><div><b id="brandName2"></b><small>Admin console</small></div></div>
+      <nav class="nav" id="nav"></nav>
+    </div>
+    <div class="foot">
+      <button id="installBtn" class="btn sec sm" type="button" hidden data-icon="download" data-size="16">Install app</button>
+      <button id="alarmBtn" class="btn sec sm" type="button"></button>
+      <button id="logout" class="btn sec sm" type="button" data-icon="logout" data-size="16">Sign out</button>
+      <small id="verTxt" style="opacity:.55;font-size:11px"></small>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar"><h1 id="vtitle">Overview</h1><div class="live"><i></i><span id="openTxt">Live</span></div></header>
+    <div class="page">
+      <div class="demo-banner" id="demo" hidden>Demo mode with sample data (sample IPs use a reserved test range). Everything is stored only in this browser.</div>
+
+      <section id="v-overview" class="stack">
+        <div id="alerts" class="stack"></div>
+        <div class="kpis" id="kpis"></div>
+        <div class="grid2">
+          <div class="panel"><header><h2>Live deliveries</h2><span class="muted sm-t" id="liveCount"></span></header><div class="tbl" id="liveTbl"></div></div>
+          <div class="panel"><header><h2>Riders</h2><span class="muted sm-t" id="riderCount"></span></header><div class="body" id="riderPanel"></div></div>
+        </div>
+      </section>
+
+      <section id="v-orders" class="stack" hidden>
+        <div class="toolbar"><div class="chips" id="ofilter"></div><input class="search" id="osearch" type="search" placeholder="Search order, name, phone, rider, IP" aria-label="Search orders"></div>
+        <div class="panel"><div class="tbl" id="oTbl"></div></div>
+      </section>
+
+      <section id="v-customers" class="stack" hidden>
+        <div class="toolbar"><div class="chips" id="cufilter"></div><input class="search" id="cusearch" type="search" placeholder="Search name, phone, IP, device" aria-label="Search customers"></div>
+        <div class="panel"><div class="tbl" id="cuTbl"></div></div>
+      </section>
+
+      <section id="v-kyc" class="stack" hidden>
+        <div id="kycTop"></div>
+        <div class="toolbar"><div class="chips" id="kfilter"></div><input class="search" id="ksearch" type="search" placeholder="Search name, phone, device, CNIC" aria-label="Search KYC"></div>
+        <div class="panel"><div class="tbl" id="kTbl"></div></div>
+      </section>
+
+      <section id="v-riders" class="stack" hidden>
+        <form id="rform" class="panel" autocomplete="off">
+          <header><h2>Register a rider</h2><span class="muted sm-t">The rider signs in with this mobile number and the PIN you choose.</span></header>
+          <div class="body stack">
+            <div class="formgrid">
+              <div class="field"><label for="rname">Full name</label><input id="rname" required placeholder="e.g. Usman Ali"></div>
+              <div class="field"><label for="rphone">Mobile number</label><input id="rphone" type="tel" inputmode="tel" required placeholder="03xx xxxxxxx"></div>
+              <div class="field"><label for="rpin">PIN (4 to 8 digits)</label><div style="display:flex;gap:8px"><input id="rpin" inputmode="numeric" required placeholder="Choose a PIN" maxlength="8"><button class="btn sec" id="genPin" type="button">Random</button></div></div>
+              <button class="btn" type="submit" data-icon="plus" data-size="16">Register rider</button>
+            </div>
+            <div class="err" id="rerr" role="alert"></div>
+            <div class="hint">PINs are stored as a secure hash, so nobody can read them later. Write the PIN down before you share it with the rider.</div>
+          </div>
+        </form>
+        <div class="panel"><header><h2>All riders</h2><span class="muted sm-t" id="rcount"></span></header><div class="tbl" id="rTbl"></div></div>
+      </section>
+
+      <section id="v-cash" class="stack" hidden>
+        <div class="kpis" id="cashKpis"></div>
+        <div class="panel"><header><h2>Cash with riders</h2><span class="muted sm-t">Collected = delivery fee + shop bill of delivered orders</span></header><div class="tbl" id="cashTbl"></div></div>
+        <div class="grid2">
+          <div class="panel"><header><h2>Deposits received</h2></header><div class="tbl" id="depTbl"></div></div>
+          <div class="panel"><header><h2>Failed orders</h2><span class="muted sm-t">Items bought but not delivered</span></header><div class="tbl" id="failTbl"></div></div>
+        </div>
+      </section>
+
+      <section id="v-security" class="stack" hidden>
+        <div class="panel"><header><h2>Security alerts</h2><span class="muted sm-t">A fraud-marked person opened the app or tried to order, or a rider pressed emergency</span></header><div class="tbl" id="alTbl"></div></div>
+        <div class="panel"><header><h2>Fraud list</h2><span class="muted sm-t">Mark a customer as fraud from the Customers tab or an order</span></header><div class="tbl" id="frTbl"></div></div>
+        <div class="panel"><header><h2>Recent app opens</h2><span class="muted sm-t">Location, IP and device each time a customer opens the app</span></header><div class="tbl" id="viTbl"></div></div>
+      </section>
+
+      <section id="v-map" class="stack" hidden>
+        <div class="toolbar"><div class="chips" id="mlayers"></div><span class="muted sm-t" id="mapNote"></span></div>
+        <div class="mapgrid">
+          <div class="panel"><div class="body" style="padding:10px"><div id="bigmap" class="map tall"></div>
+            <div class="legend"><span><i class="lg live"></i>Rider on delivery</span><span><i class="lg idle"></i>Rider free</span><span><i class="lg stale"></i>Old position (10+ min)</span><span><i class="lg dest"></i>Customer drop-off</span><span><i class="lg warn"></i>Waiting for rider</span><span><i class="dt" style="background:#0B7A4B"></i>Delivered today</span><span><i class="dt" style="background:#C0392B"></i>Failed today / alert</span></div></div></div>
+          <div class="stack">
+            <div class="panel"><header><h2>Riders</h2><span class="muted sm-t" id="mRidersCount"></span></header><div class="body mlist" id="mRiders"></div></div>
+            <div class="panel"><header><h2>Active orders</h2><span class="muted sm-t" id="mOrdersCount"></span></header><div class="body mlist" id="mOrders"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="v-complaints" class="stack" hidden>
+        <div class="chips" id="cfilter"></div>
+        <div class="panel"><div class="tbl" id="cTbl"></div></div>
+      </section>
+
+      <section id="v-reports" class="stack" hidden>
+        <div class="toolbar"><select id="range" style="max-width:220px" aria-label="Date range"><option value="today">Today</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="all">All time</option></select>
+          <button id="csv" class="btn sec sm" type="button" data-icon="download" data-size="16">Download CSV</button></div>
+        <div class="kpis" id="rkpis"></div>
+        <div class="panel"><header><h2>Rider performance</h2></header><div class="tbl" id="perfTbl"></div></div>
+        <div class="panel"><header><h2>Order history</h2></header><div class="tbl" id="histTbl"></div></div>
+      </section>
+
+      <section id="v-settings" class="stack" hidden>
+        <form id="sform" class="stack" autocomplete="off">
+          <div class="panel"><header><h2>Service</h2></header><div class="body setgrid">
+            <label class="toggle"><input type="checkbox" id="s_accepting"> Accepting orders</label>
+            <div class="field"><label for="s_openFrom">Open from (hour, 0 to 23)</label><input id="s_openFrom" type="number" min="0" max="23"></div>
+            <div class="field"><label for="s_openTo">Open until (hour, 1 to 24)</label><input id="s_openTo" type="number" min="1" max="24"></div>
+            <div class="field"><label for="s_appName">App name</label><input id="s_appName"></div>
+            <div class="field"><label for="s_supportPhone">Support phone</label><input id="s_supportPhone"></div>
+            <div class="field"><label for="s_supportWhatsapp">Support WhatsApp (92...)</label><input id="s_supportWhatsapp"></div>
+          </div></div>
+          <div class="panel"><header><h2>Money and limits</h2></header><div class="body setgrid">
+            <div class="field"><label for="s_deliveryFee">Delivery fee (Rs)</label><input id="s_deliveryFee" type="number" min="0"></div>
+            <div class="field"><label for="s_riderShare">Rider earning per delivery (Rs)</label><input id="s_riderShare" type="number" min="0"></div>
+            <div class="field"><label for="s_cashLimit">Alert when rider cash exceeds (Rs)</label><input id="s_cashLimit" type="number" min="0"></div>
+            <div class="field"><label for="s_maxActivePerCustomer">Max open orders per customer</label><input id="s_maxActivePerCustomer" type="number" min="1"></div>
+            <div class="field"><label for="s_maxActivePerRider">Max orders a rider can carry</label><input id="s_maxActivePerRider" type="number" min="1"></div>
+          </div></div>
+          <div class="panel"><header><h2>KYC (customer verification)</h2><span class="muted sm-t">New customers send their CNIC (front and back) and a selfie once. You review them in the KYC tab.</span></header><div class="body setgrid">
+            <div class="field"><label for="s_kycMode">Ordering before approval</label><select id="s_kycMode"><option value="wait">Customers can order only after you approve (recommended)</option><option value="allow">Customers can order while you review</option><option value="off">KYC off (no CNIC needed)</option></select></div>
+            <div class="field"><label for="s_kycHours">You promise to check KYC within (hours)</label><input id="s_kycHours" type="number" min="1" max="72"></div>
+          </div></div>
+          <div class="panel" id="areaPanel"><header><h2>Service area (Kot Momin)</h2><span class="muted sm-t">Drag the centre pin or tap the map to move it. Slide to change the radius.</span></header><div class="body stack">
+            <div id="areaMap" class="map areaed"></div>
+            <div class="radrow"><label for="s_radiusRange"><b>Radius</b></label><input id="s_radiusRange" type="range" min="0.5" max="50" step="0.5" aria-label="Radius"><div class="radval"><input id="s_radiusKm" type="number" step="0.1" min="0.5" max="50" aria-label="Radius in km"><span>km</span></div></div>
+            <div class="areastats" id="areaStats"></div>
+            <div class="oactions"><button type="button" class="btn" id="saveArea" data-icon="check" data-size="16">Save service area</button><button class="btn sec" type="button" id="useHere" data-icon="target" data-size="16">Use my location as the centre</button><button class="btn ghost" type="button" id="resetArea">Back to Kot Momin centre</button></div>
+            <div class="setgrid">
+              <div class="field"><label for="s_lat">Centre latitude</label><input id="s_lat" type="number" step="0.00001"></div>
+              <div class="field"><label for="s_lng">Centre longitude</label><input id="s_lng" type="number" step="0.00001"></div>
+              <div class="field"><label for="s_speedKmh">Average rider speed (km/h)</label><input id="s_speedKmh" type="number" min="5"></div>
+            </div>
+            <div class="field"><label for="s_areas">Areas / mohallas customers can pick (one per line)</label><textarea id="s_areas" rows="6"></textarea></div>
+            <div class="hint">The service area is a circle: the same distance (radius) from the centre in every direction, from 0.5 km up to 50 km. Customers outside it cannot open the app or place orders. Green dots are past delivery pins, orange dots are people who opened the app from outside the circle (they could not order). Default: 5.5 km around Kot Momin city centre.</div>
+          </div></div>
+          <div class="panel"><header><h2>Admin PIN</h2></header><div class="body setgrid">
+            <div class="field"><label for="s_pin1">New admin PIN (6 to 8 digits)</label><input id="s_pin1" type="password" inputmode="numeric" placeholder="Leave empty to keep"></div>
+            <div class="field"><label for="s_pin2">Repeat new PIN</label><input id="s_pin2" type="password" inputmode="numeric"></div>
+          </div></div>
+          <div class="err" id="serr" role="alert"></div>
+          <div><button class="btn" type="submit">Save settings</button></div>
+        </form>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { watch, add, update, remove, getWhere, watchSettings, saveSettings, cloud, STATUS, ACTIVE, ss, mediaSrc, hydrateMedia } from "./db.js";
+import { norm, validPhone, esc, icon, hydrateIcons, orderNo, rs, num, ago, fmtTime, fmtDate, mins, initials, toast, beep, onInstallable, promptInstall, createMap, inArea, distKm, isOpen, hourLabel, adminHash, riderHash, collected, startOfToday, trustOf, TRUST_CLASS, TRUST_EN, getPos, inApp, APP_VERSION, pushBack } from "./util.js";
+import { openChat } from "./chat.js";
+import { askText, askYes, askChoice, askPassword } from "./dialog.js";
+import { kycCryptoOk, createKycKeys, unlockKycKey, rewrapKycKey, openKyc, strongKycPassword } from "./kyc.js";
+import { DEFAULTS } from "./config.js";
+
+const $ = (id) => document.getElementById(id);
+if (!cloud) $("demo").hidden = false;
+hydrateIcons();
+onInstallable(() => ($("installBtn").hidden = false));
+$("installBtn").addEventListener("click", () => promptInstall());
+
+let S = null, orders = [], riders = [], complaints = [], settles = [], blocks = [], visits = [], alerts = [], firstAlerts = true, lastAlertCount = 0;
+// KYC: list (sirf metadata + band data), khulne ke baad CNIC info aur tasveerein sirf is session ki memory mein
+let kycs = [], kycKey = null, kycPk8 = null, kfilter = "pending", firstKyc = true, lastKycPending = 0, kycTries = 0, kycLockUntil = 0;
+const kycInfo = new Map(), kycFiles = new Map();
+const HOUR = 3600000;
+let view = "overview", ofilter = "all", cufilter = "all", cfilter = "open", started = false, firstSnap = true, lastNew = 0;
+const OUT = ["accepted", "on_the_way"];
+const pill = (cls, label) => `<span class="pill ${esc(cls)}"><i></i>${esc(label)}</span>`;
+const oPill = (o) => pill(o.status, STATUS[o.status] || o.status);
+const table = (head, rows, empty) => rows.length
+  ? `<table><thead><tr>${head.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table>`
+  : `<div class="empty"><p class="sm-t">${empty}</p></div>`;
+const wa = (p) => "https://wa.me/" + norm(p).replace(/^0/, "92");
+const avg = (a) => (a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : 0);
+
+// ---------------- derived data ----------------
+const isBlockedPhone = (p) => blocks.some((b) => b.type === "phone" && norm(b.value) === norm(p));
+const isBlockedDevice = (d) => !!d && blocks.some((b) => b.type === "device" && b.value === d);
+function devicePhones(dev) { return dev ? [...new Set(orders.filter((o) => o.device === dev).map((o) => norm(o.phone)))] : []; }
+function history(o) {
+  const prev = orders.filter((x) => norm(x.phone) === norm(o.phone) && x.createdAt < o.createdAt);
+  return { prev: prev.length, delivered: prev.filter((x) => x.status === "delivered").length, cancelled: prev.filter((x) => x.status === "cancelled").length, failed: prev.filter((x) => x.status === "failed").length };
+}
+const trustFor = (o) => trustOf(orders, o.phone, o.device, blocks);
+const trustBadge = (o) => { const tr = trustFor(o); return `<span class="flag ${TRUST_CLASS[tr.level]}">${esc(TRUST_EN[tr.level])}</span>`; };
+const loc = (p, label) => (p && p.lat != null ? `<a href="https://www.google.com/maps?q=${p.lat},${p.lng}" target="_blank" rel="noopener">${label || "View on map"}</a>${p.acc ? ` <span class="muted">±${p.acc} m</span>` : ""}` : "-");
+const isFraudPhone = (p) => blocks.some((b) => b.kind === "fraud" && b.type === "phone" && norm(b.value) === norm(p));
+function flags(o) {
+  const f = [], h = history(o), dp = devicePhones(o.device);
+  if (isFraudPhone(o.phone) || blocks.some((b) => b.kind === "fraud" && b.value === o.device)) f.push(["FRAUD", "red"]);
+  if (o.emergency) f.push(["Rider emergency", "red"]);
+  if (o.payMismatch) f.push([`Customer says paid ${rs(o.custPaid)}`, "red"]);
+  if (o.billDisputed) f.push(["Bill disputed", "red"]);
+  if (o.type !== "pickup" && ["on_the_way", "delivered"].includes(o.status) && !o.receipt && !o.receiptId) f.push(["No bill photo", "red"]);
+  if (isBlockedPhone(o.phone)) f.push(["Blocked number", "red"]);
+  if (dp.length > 1) f.push(dp.some((p) => p !== norm(o.phone) && isBlockedPhone(p)) || isBlockedDevice(o.device) ? ["Device of blocked customer", "red"] : [`Device used by ${dp.length} numbers`, ""]);
+  if (h.failed) f.push([`${h.failed} failed before`, "red"]);
+  if (h.cancelled >= 2) f.push([`${h.cancelled} cancelled before`, ""]);
+  if (!h.delivered && ACTIVE.includes(o.status)) f.push(["New customer", "blue"]);
+  if (o.dest && S && !inArea(o.dest, S)) f.push(["Outside area", "red"]);
+  if (o.acc > 150) f.push([`Weak GPS ±${o.acc} m`, ""]);
+  if (o.billOverEstimate) f.push(["Bill above estimate", ""]);
+  if ((o.codeFails || 0) >= 2) f.push([`Wrong code ×${o.codeFails}`, "red"]);
+  if (o.otpOk === "admin") f.push(["Completed by admin", ""]);
+  return f;
+}
+const flagHtml = (o, max = 9) => { const f = flags(o); return f.length ? `<div class="flags">${f.slice(0, max).map(([l, c]) => `<span class="flag ${c}">${esc(l)}</span>`).join("")}${f.length > max ? `<span class="flag">+${f.length - max}</span>` : ""}</div>` : `<span class="muted xs-t">None</span>`; };
+const riderState = (r) => {
+  if (r.active === false) return "offline";
+  if (orders.some((o) => o.riderId === r.id && OUT.includes(o.status))) return "busy";
+  return r.online && (!cloud || Date.now() - (r.lastSeen || 0) < 120000) ? "online" : "offline";
+};
+const stateLabel = (r) => (r.active === false ? "Paused" : { busy: "On delivery", online: "Online", offline: "Offline" }[riderState(r)]);
+function riderCash(rid) {
+  const c = orders.filter((o) => o.riderId === rid).reduce((s, o) => s + collected(o), 0);
+  const d = settles.filter((x) => x.riderId === rid).reduce((s, x) => s + num(x.amount), 0);
+  return { collected: c, deposited: d, inHand: c - d };
+}
+function customers() {
+  const m = new Map();
+  orders.forEach((o) => {
+    const k = norm(o.phone);
+    const c = m.get(k) || { phone: k, name: o.name, orders: [], devices: new Set(), ips: new Set(), last: 0 };
+    c.orders.push(o);
+    if (o.device) c.devices.add(o.device);
+    if (o.ip) c.ips.add(o.ip);
+    if (o.createdAt > c.last) { c.last = o.createdAt; c.name = o.name; }
+    m.set(k, c);
+  });
+  return [...m.values()].map((c) => ({ ...c, delivered: c.orders.filter((o) => o.status === "delivered").length, cancelled: c.orders.filter((o) => o.status === "cancelled").length, failed: c.orders.filter((o) => o.status === "failed").length, spent: c.orders.reduce((s, o) => s + collected(o), 0), blocked: isBlockedPhone(c.phone) || [...c.devices].some(isBlockedDevice) }));
+}
+
+// ---------------- navigation ----------------
+const VIEWS = [["overview", "Overview", "grid"], ["orders", "Orders", "package"], ["customers", "Customers", "user"], ["kyc", "KYC", "idcard"], ["riders", "Riders", "users"], ["cash", "Cash", "cash"], ["security", "Security", "shield"], ["map", "Live map", "map"], ["complaints", "Complaints", "alert"], ["reports", "Reports", "chart"], ["settings", "Settings", "settings"]];
+function renderNav() {
+  const waiting = orders.filter((o) => o.status === "new").length, openC = complaints.filter((c) => c.status === "open").length;
+  const overCash = riders.filter((r) => riderCash(r.id).inHand > (S?.cashLimit || 1e9)).length;
+  const kp = kycs.filter((k) => k.status === "pending"), kLate = kp.some((k) => Date.now() > dueOf(k));
+  const cnt = { orders: waiting, complaints: openC, cash: overCash, security: alerts.filter((a) => !a.seen).length, kyc: kp.length };
+  $("nav").innerHTML = VIEWS.map(([k, l, ic]) => `<button data-v="${k}" class="${view === k ? "on" : ""}">${icon(ic, 18)}${l}${cnt[k] ? `<span class="cnt ${k === "kyc" && !kLate ? "" : "red"}">${cnt[k]}</span>` : ""}</button>`).join("");
+}
+// Back button: koi bhi tab -> Overview
+let goBack = null;
+function go(v, fromBack) {
+  view = v;
+  for (const [k] of VIEWS) $("v-" + k).hidden = k !== v;
+  $("vtitle").textContent = VIEWS.find((x) => x[0] === v)[1];
+  renderNav(); renderView();
+  // Phone par upar wali tab line mein chuni hui tab nazar aaye
+  const nb = $("nav").querySelector("button.on");
+  if (nb && window.innerWidth < 820) $("nav").scrollLeft = nb.offsetLeft - $("nav").clientWidth / 2 + nb.clientWidth / 2;
+  if (fromBack) return;
+  if (v === "overview") { if (goBack) { const r = goBack; goBack = null; r(); } }
+  else if (!goBack) goBack = pushBack(() => { goBack = null; go("overview", true); });
+}
+// Order ya KYC ki khidki (drawer): back button se band; aik khidki se doosri par jaane se entry wahi rehti hai
+let sheetRel = null;
+function holdSheet() { if (!sheetRel) sheetRel = pushBack(() => { sheetRel = null; closeDrawer(true); closeKyc(true); }); }
+function dropSheet() { if (sheetRel && !document.getElementById("drawer") && !document.getElementById("kdrawer")) { const r = sheetRel; sheetRel = null; r(); } }
+// Chhoti khidki (photo, rider card) ke liye
+function modalBack(ov) {
+  let release = pushBack(() => { release = null; ov.remove(); });
+  return () => { ov.remove(); if (release) { const r = release; release = null; r(); } };
+}
+$("nav").addEventListener("click", (e) => { const b = e.target.closest("button[data-v]"); if (b) go(b.dataset.v); });
+function renderView() {
+  if (!S) return;
+  $("openTxt").textContent = isOpen(S) ? "Live · accepting orders" : S.accepting ? `Closed · opens ${hourLabel(S.openFrom)}` : "Paused · not accepting orders";
+  ({ overview: renderOverview, orders: renderOrders, customers: renderCustomers, kyc: renderKyc, riders: renderRiders, cash: renderCash, security: renderSecurity, map: renderMap, complaints: renderComplaints, reports: renderReports, settings: renderSettings })[view]();
+}
+document.addEventListener("click", (e) => {
+  const tg = e.target.closest("[data-open]");
+  if (tg && !e.target.closest("#drawer")) { e.preventDefault(); openOrder(tg.dataset.open); }
+  const g = e.target.closest("[data-go]");
+  if (g) { e.preventDefault(); if (g.dataset.q) $("osearch").value = g.dataset.q; go(g.dataset.go); }
+});
+
+// ---------------- overview ----------------
+function renderOverview() {
+  const today = orders.filter((o) => o.createdAt >= startOfToday()), delT = today.filter((o) => o.status === "delivered");
+  const act = orders.filter((o) => ACTIVE.includes(o.status));
+  const cashOut = riders.reduce((s, r) => s + Math.max(0, riderCash(r.id).inHand), 0);
+  const loss30 = orders.filter((o) => o.status === "failed" && o.createdAt > Date.now() - 30 * 864e5).reduce((s, o) => s + num(o.bill), 0);
+  $("kpis").innerHTML = [
+    ["Orders today", today.length, "package"], ["Active now", act.length, "bolt"], ["Delivered today", delT.length, "check"],
+    ["Avg. delivery time", avg(delT.map((o) => mins(o.createdAt, o.deliveredAt)).filter((x) => x != null)) + " min", "clock"],
+    ["Fees earned today", rs(delT.reduce((s, o) => s + num(o.fee), 0)), "wallet"], ["Cash with riders", rs(cashOut), "cash"],
+    ["Failed order loss (30 days)", rs(loss30), "alert", loss30 > 0], ["Open complaints", complaints.filter((c) => c.status === "open").length, "message"],
+    ["KYC waiting", kycs.filter((k) => k.status === "pending").length, "idcard", kycs.some((k) => k.status === "pending" && Date.now() > dueOf(k))],
+  ].map(([l, v, ic, w]) => `<div class="kpi ${w ? "warn" : ""}"><span>${icon(ic, 15)}${l}</span><b>${v}</b></div>`).join("");
+
+  const al = [];
+  alerts.filter((a) => !a.seen).slice(-3).reverse().forEach((a) => al.push(`<div class="alert" style="background:var(--ink);color:#fff">${icon("shield", 20)}<div class="grow"><b>${esc(alertTitle(a))}</b> · ${esc(a.name || a.phone || a.device)} · ${ago(a.ts)} · ${a.lat != null ? `<a style="color:#9fe0bd" href="https://www.google.com/maps?q=${a.lat},${a.lng}" target="_blank" rel="noopener">live location</a>` : "no location"}</div><button class="btn sm" data-go="security">Open</button></div>`));
+  if (S.kycMode !== "off" && !S.kycPublicKey) al.push(`<div class="alert">${icon("idcard", 20)}<div class="grow"><b>KYC is not on yet.</b> Set your KYC password so new customers verify with their CNIC and selfie.</div><button class="btn sm dark" data-go="kyc">Turn on KYC</button></div>`);
+  const kp = kycs.filter((k) => k.status === "pending"), kLate = kp.filter((k) => Date.now() > dueOf(k));
+  if (kp.length) al.push(`<div class="alert" style="${kLate.length ? "background:var(--red-soft);color:var(--red)" : ""}">${icon("idcard", 20)}<div class="grow">${kp.length} customer${kp.length > 1 ? "s are" : " is"} waiting for KYC review${kLate.length ? `, ${kLate.length} past the ${S.kycHours || 24}-hour deadline` : ""}. Oldest sent ${ago(kp[0].createdAt)}.</div><button class="btn sm dark" data-go="kyc">Review KYC</button></div>`);
+  const wait = orders.filter((o) => o.status === "new");
+  if (wait.length) al.push(`<div class="alert">${icon("clock", 20)}<div class="grow">${wait.length} order${wait.length > 1 ? "s are" : " is"} waiting for a rider. Oldest placed ${ago(wait[0].createdAt)}.</div><button class="btn sm dark" data-open="${esc(wait[0].id)}">Assign now</button></div>`);
+  const risky = act.filter((o) => flags(o).some((f) => f[1] === "red"));
+  if (risky.length) al.push(`<div class="alert" style="background:var(--red-soft);color:var(--red)">${icon("shield", 20)}<div class="grow">${risky.length} active order${risky.length > 1 ? "s have" : " has"} a risk warning (${esc(flags(risky[0]).filter((f) => f[1] === "red").map((f) => f[0]).join(", "))}). Check before the rider spends money.</div><button class="btn sm dark" data-open="${esc(risky[0].id)}">Review</button></div>`);
+  riders.filter((r) => riderCash(r.id).inHand > S.cashLimit).forEach((r) => al.push(`<div class="alert">${icon("cash", 20)}<div class="grow">${esc(r.name)} is holding ${rs(riderCash(r.id).inHand)} in cash (limit ${rs(S.cashLimit)}).</div><button class="btn sm dark" data-go="cash">Record deposit</button></div>`));
+  $("alerts").innerHTML = al.join("");
+
+  $("liveCount").textContent = act.length + " in progress";
+  $("liveTbl").innerHTML = table(["Order", "Customer", "Rider", "Status", "Warnings"],
+    act.slice().reverse().map((o) => `<tr class="click" data-open="${esc(o.id)}"><td><b>${esc(orderNo(o))}</b><div class="muted xs-t">${ago(o.createdAt)}</div></td><td>${esc(o.name)}</td><td>${esc(o.rider || "Unassigned")}</td><td>${oPill(o)}</td><td>${flagHtml(o, 2)}</td></tr>`),
+    "No deliveries in progress.");
+  const on = riders.filter((r) => riderState(r) !== "offline").length;
+  $("riderCount").textContent = `${on} of ${riders.length} active`;
+  $("riderPanel").innerHTML = riders.length ? riders.map((r) => `<div class="rrow"><span class="av">${esc(initials(r.name))}</span><div class="grow"><b>${esc(r.name)}</b><div class="muted xs-t">Cash ${rs(riderCash(r.id).inHand)}</div></div>${pill(r.active === false ? "offline" : riderState(r), stateLabel(r))}</div>`).join("") : `<div class="empty"><p class="sm-t">No riders yet.</p></div>`;
+}
+
+// ---------------- orders ----------------
+const OF = [["all", "All"], ["new", "Awaiting rider"], ["accepted", "Assigned"], ["on_the_way", "On the way"], ["delivered", "Delivered"], ["failed", "Failed"], ["cancelled", "Cancelled"], ["flagged", "With warnings"]];
+function renderOrders() {
+  const match = (o, k) => k === "all" || (k === "flagged" ? flags(o).length > 0 && !["delivered", "cancelled"].includes(o.status) || flags(o).some((f) => f[1] === "red") : o.status === k);
+  $("ofilter").innerHTML = OF.map(([k, l]) => `<button class="chip ${ofilter === k ? "on" : ""}" data-f="${k}">${l} ${orders.filter((o) => match(o, k)).length}</button>`).join("");
+  const q = $("osearch").value.trim().toLowerCase();
+  const list = orders.filter((o) => match(o, ofilter) && (!q || [orderNo(o), o.name, o.phone, o.rider, o.address, o.area, o.items, o.ip, o.device].join(" ").toLowerCase().includes(q))).slice().reverse();
+  $("oTbl").innerHTML = table(["Order", "Customer", "Trust", "Items", "Rider", "Status", "Warnings", "Placed", "Total"],
+    list.map((o) => { const h = history(o); return `<tr class="click" data-open="${esc(o.id)}"><td><b>${esc(orderNo(o))}</b></td>
+      <td><div class="who"><span class="av">${esc(initials(o.name))}</span><div><b>${esc(o.name)}</b><small>${esc(o.phone)} · ${h.prev ? "order #" + (h.prev + 1) : "first order"}</small></div></div></td><td>${trustBadge(o)}</td>
+      <td><div class="clip">${esc(o.items)}</div></td><td>${esc(o.rider || "Unassigned")}</td><td>${oPill(o)}</td><td>${flagHtml(o, 2)}</td><td>${fmtDate(o.createdAt)}</td>
+      <td>${o.status === "delivered" ? rs(collected(o)) : o.bill ? rs(num(o.fee) + num(o.bill)) : "-"}</td></tr>`; }), "No orders match.");
+}
+$("ofilter").addEventListener("click", (e) => { const b = e.target.closest("[data-f]"); if (b) { ofilter = b.dataset.f; renderOrders(); } });
+$("osearch").addEventListener("input", renderOrders);
+
+// ---------------- order drawer ----------------
+let openId = null, openSig = "";
+function drawerHtml(o) {
+  const h = history(o), dp = devicePhones(o.device), canAssign = o.status === "new" || o.status === "accepted";
+  // Riders: pehle khaali (free), phir delivery par, aakhir mein offline; har group mein jo customer ke sab se qareeb
+  const rdist = (r) => { const p = riderPos(r); return p && o.dest && posAge(p) < 30 * 60000 ? distKm(p, o.dest) : null; };
+  const opts = riders.filter((r) => r.active !== false).map((r) => ({ r, d: rdist(r), off: { online: 0, busy: 1, offline: 2 }[riderState(r)] }))
+    .sort((a, b) => a.off - b.off || (a.d == null ? 99 : a.d) - (b.d == null ? 99 : b.d))
+    .map(({ r, d }) => `<option value="${esc(r.id)}" ${r.id === o.riderId ? "selected" : ""}>${esc(r.name)} · ${stateLabel(r)}${d != null ? ` · ${d.toFixed(1)} km away` : ""}</option>`).join("");
+  const tl = (l, ts) => `<div><span>${l}</span><span>${ts ? fmtDate(ts) : "-"}</span></div>`;
+  const dist = o.dest && S ? distKm(o.dest, S.center).toFixed(2) + " km from centre" : "No pin";
+  const blocked = isBlockedPhone(o.phone);
+  return `<div class="sh"><div><h3>${esc(orderNo(o))}</h3><div class="muted sm-t">${o.type === "pickup" ? "Parcel" : "Shop order"} · placed ${ago(o.createdAt)}</div></div>${oPill(o)}</div>
+    <div class="flags">${trustBadge(o)}${flags(o).map(([l, c]) => `<span class="flag ${c}">${esc(l)}</span>`).join("")}</div>
+    <div><div class="sec-title">Customer</div>
+      <dl class="kv" style="margin-top:6px"><dt>Name</dt><dd>${esc(o.name)}</dd><dt>Mobile</dt><dd>${esc(o.phone)}</dd>
+      <dt>Order history</dt><dd>This is order #${h.prev + 1} from this number · ${h.delivered} delivered · ${h.cancelled} cancelled · ${h.failed} failed <a href="#" data-go="customers" style="margin-left:6px">Customer page</a></dd>
+      <dt>KYC</dt><dd>${(() => { const k = kycOfOrder(o); return k ? `${kycPill(k)}${infoOf(k) ? ` <span class="mono">${esc(infoOf(k).cnic)}</span>` : ""} <a href="#" data-kopen="${esc(k.id)}">Open KYC</a>` : `<span class="muted">No KYC</span>`; })()}</dd>
+      <dt>IP address</dt><dd class="mono">${esc(o.ip || "Not available")}</dd>
+      <dt>Device ID</dt><dd class="mono">${esc(o.device || "-")}${dp.length > 1 ? ` · also used by ${dp.filter((p) => p !== norm(o.phone)).map(esc).join(", ")}` : ""}</dd>
+      <dt>Phone type</dt><dd>${esc(o.ua || "-")}</dd>
+      <dt>Ordered from</dt><dd>${loc(o.orderLoc, "Where they stood when ordering")}</dd>
+      <dt>Received at</dt><dd>${loc(o.custPayLoc || o.deliveredLoc, o.custPayLoc ? "Customer's phone at payment" : "Rider's position at delivery")}</dd>
+      <dt>Delivery pin</dt><dd>${o.dest ? `${esc(dist)} · GPS ±${o.acc || "?"} m · ${inArea(o.dest, S) ? "inside service area" : "<b style='color:var(--red)'>outside service area</b>"} · <a href="https://www.google.com/maps?q=${o.dest.lat},${o.dest.lng}" target="_blank" rel="noopener">View pin</a>` : "No pin"}</dd>
+      <dt>Address</dt><dd>${esc([o.area, o.address].filter(Boolean).join(", "))}</dd>${o.note ? `<dt>Note</dt><dd>${esc(o.note)}</dd>` : ""}</dl>
+      <div class="oactions" style="margin-top:8px"><a class="btn sec sm" href="tel:${esc(o.phone)}">${icon("phone", 15)} Call</a><a class="btn sec sm" href="${esc(wa(o.phone))}" target="_blank" rel="noopener">${icon("message", 15)} WhatsApp</a>
+        <button class="btn ${blocked ? "sec" : "danger"} sm" data-act="${blocked ? "unblock" : "block"}">${icon("ban", 15)} ${blocked ? "Unblock customer" : "Block customer"}</button>
+        ${isFraudPhone(o.phone) ? "" : `<button class="btn danger sm" data-act="fraud">${icon("shield", 15)} Mark as fraud</button>`}</div></div>
+    <div><div class="sec-title">Order</div><dl class="kv" style="margin-top:6px"><dt>Items</dt><dd>${esc(o.items)}</dd>
+      <dt>${o.type === "pickup" ? "Pickup" : "Shop"}</dt><dd>${esc((o.type === "pickup" ? o.pickup : o.shop) || "Not specified")}</dd>
+      ${o.estimate ? `<dt>Customer estimate</dt><dd>${rs(o.estimate)}</dd>` : ""}
+      ${o.voice || o.voiceId ? `<dt>Voice order</dt><dd><audio controls preload="none" ${mediaSrc(o.voice, o.voiceId)} style="height:34px;max-width:100%"></audio></dd>` : ""}
+      ${o.listPhoto || o.photoId ? `<dt>Customer photo</dt><dd><img class="receipt" style="max-height:200px" ${mediaSrc(o.listPhoto, o.photoId)} alt="Customer photo"></dd>` : ""}</dl></div>
+    <div><div class="sec-title">Rider</div>
+      <p style="margin-top:4px">${o.rider ? `<b>${esc(o.rider)}</b> · ${esc(o.riderPhone || "")}` : "No rider assigned yet"}</p>
+      ${o.riderLoc && OUT.includes(o.status) ? `<p class="muted sm-t">Last location ${ago(o.riderLoc.ts)} · <a href="https://www.google.com/maps?q=${o.riderLoc.lat},${o.riderLoc.lng}" target="_blank" rel="noopener">View on map</a></p>` : ""}
+      ${o.pickedLoc ? `<p class="muted sm-t">Bought / picked up at: ${loc(o.pickedLoc, "rider's position then")}</p>` : ""}
+      ${canAssign ? `<div class="chatbar" style="margin-top:8px"><select id="assignSel" aria-label="Rider"><option value="">Select a rider</option>${opts}</select><button class="btn" data-act="assign">${o.status === "new" ? "Assign" : "Reassign"}</button></div>` : ""}</div>
+    <div><div class="sec-title">Timeline</div><div class="tl">${tl("Placed", o.createdAt)}${tl("Rider assigned", o.acceptedAt)}${tl("Customer confirmed", o.confirmedAt)}${tl("Picked up", o.pickedAt)}
+      ${o.status === "failed" ? tl("Failed", o.failedAt) + `<div><span>Reason</span><span><b>${esc(o.failReason || "-")}</b></span></div>` : tl("Delivered", o.deliveredAt)}
+      ${o.status === "cancelled" ? tl("Cancelled", o.cancelledAt) : ""}
+      ${o.deliveredAt ? `<div><span>Total time</span><span><b>${mins(o.createdAt, o.deliveredAt)} min</b> (rider ${mins(o.acceptedAt, o.deliveredAt)} min)</span></div>` : ""}</div></div>
+    <div><div class="sec-title">Cash</div><div class="tl"><div><span>Delivery fee</span><span>${rs(o.fee)}</span></div><div><span>Shop bill</span><span>${o.bill !== "" && o.bill != null ? rs(o.bill) : "-"}</span></div>
+      <div><span>${o.status === "delivered" ? "Collected" : "To collect"}</span><span><b>${rs(num(o.fee) + num(o.bill))}</b></span></div>
+      <div><span>Customer says paid</span><span>${o.custPaid ? `<b style="${o.payMismatch ? "color:var(--red)" : ""}">${rs(o.custPaid)}</b> at ${fmtTime(o.custPaidAt)}` : "Not confirmed yet"}</span></div>
+      ${o.arrivedAt && o.deliveredAt ? `<div><span>Door wait</span><span>${mins(o.arrivedAt, o.deliveredAt)} min</span></div>` : ""}
+      <div><span>Delivery code</span><span>${o.otpOk === "code" ? "Verified with customer code" : o.otpOk === "admin" ? "Completed by admin without code" : o.otpHash ? (o.codeFails ? `Not yet verified · ${o.codeFails} wrong attempt(s)` : "Not yet verified") : "No code"}</span></div></div>
+      ${o.receipt || o.receiptId ? `<img class="receipt" style="margin-top:8px;max-height:320px" alt="Receipt photo" ${mediaSrc(o.receipt, o.receiptId)}>` : ""}</div>
+    <div class="btns" style="flex-wrap:wrap">${o.rider ? `<button class="btn sec" data-act="chat">${icon("message", 16)} Chat</button>` : ""}
+      ${o.status === "on_the_way" ? `<button class="btn sec" data-act="force">Complete without code</button>` : ""}
+      ${OUT.includes(o.status) ? `<button class="btn sec" data-act="fail">Mark failed</button>` : ""}
+      ${ACTIVE.includes(o.status) ? `<button class="btn danger" data-act="cancel">Cancel order</button>` : ""}<button class="btn sec" data-act="close">Close</button></div>`;
+}
+function openOrder(id) {
+  const o = orders.find((x) => x.id === id);
+  if (!o) return;
+  closeDrawer(true); closeKyc(true);
+  openId = id; openSig = JSON.stringify(o) + blocks.length + kycs.length;
+  const ov = document.createElement("div");
+  ov.className = "modal center"; ov.id = "drawer";
+  ov.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">${drawerHtml(o)}</div>`;
+  document.body.appendChild(ov);
+  hydrateMedia(ov);
+  holdSheet();
+  ov.addEventListener("click", async (e) => {
+    if (e.target === ov) return closeDrawer();
+    const g = e.target.closest("[data-go]");
+    if (g) { const o2 = orders.find((x) => x.id === openId); closeDrawer(); $("cusearch").value = o2 ? norm(o2.phone) : ""; return; }
+    const b = e.target.closest("[data-act]");
+    if (!b) return;
+    const cur = orders.find((x) => x.id === openId);
+    if (!cur) return;
+    try {
+      const a = b.dataset.act;
+      if (a === "close") closeDrawer();
+      if (a === "assign") {
+        const r = riders.find((x) => x.id === $("assignSel").value);
+        if (!r) return toast("Select a rider first.");
+        await update("orders", cur.id, { status: "accepted", riderId: r.id, rider: r.name, riderPhone: r.phone, acceptedAt: cur.acceptedAt || Date.now() });
+        toast(`Assigned to ${r.name}.`);
+      }
+      if (a === "cancel" && await askYes("Cancel this order?", "Cancel order", true)) { await update("orders", cur.id, { status: "cancelled", cancelledAt: Date.now(), cancelledBy: "admin" }); toast("Order cancelled."); }
+      if (a === "force" && await askYes("Complete this delivery without the customer's code? Do this only after you have confirmed with the customer by phone.", "Complete delivery")) { await update("orders", cur.id, { status: "delivered", deliveredAt: Date.now(), otpOk: "admin" }); toast("Marked as delivered."); }
+      if (a === "fail") { const r = await askText("Why did this order fail?", "", "Reason", "Mark failed", "text"); if (r !== null) { await update("orders", cur.id, { status: "failed", failedAt: Date.now(), failReason: r.trim() || "Marked failed by admin" }); toast("Marked as failed."); } }
+      if (a === "block") await blockCustomer(norm(cur.phone));
+      if (a === "fraud") await markFraud(norm(cur.phone));
+      if (a === "unblock") await unblockCustomer(norm(cur.phone));
+      if (a === "chat") openChat({ orderId: cur.id, role: "admin", name: "Admin", title: "Chat · " + orderNo(cur), subtitle: cur.name + " and " + cur.rider });
+    } catch (err) { console.error(err); toast("Action failed. Please try again."); }
+  });
+}
+function closeDrawer(silent) { document.getElementById("drawer")?.remove(); openId = null; if (!silent) dropSheet(); }
+function refreshDrawer() {
+  if (!openId) return;
+  const o = orders.find((x) => x.id === openId), d = document.getElementById("drawer");
+  if (!o || !d) return;
+  const sig = JSON.stringify(o) + blocks.length + kycs.length;
+  if (sig === openSig || d.contains(document.activeElement) && document.activeElement.tagName === "SELECT") return;
+  openSig = sig;
+  d.querySelector(".sheet").innerHTML = drawerHtml(o);
+  hydrateMedia(d);
+}
+
+// ---------------- customers ----------------
+async function blockCustomer(phone) {
+  const c = customers().find((x) => x.phone === phone);
+  const reason = await askText(`Block ${c?.name || phone}? They will not be able to place orders from this number or their devices.`, "", "Reason (e.g. refused 2 orders)", "Block", "text");
+  if (reason === null) return;
+  const now = Date.now();
+  await add("blocks", { kind: "block", type: "phone", value: phone, name: c?.name || "", reason: reason.trim(), createdAt: now });
+  for (const d of c?.devices || []) if (!isBlockedDevice(d)) await add("blocks", { kind: "block", type: "device", value: d, name: c?.name || "", reason: reason.trim(), createdAt: now });
+  const ck = await blockCnics(phone, { kind: "block", name: c?.name || "", reason: reason.trim(), createdAt: now });
+  toast("Customer blocked." + (ck === -1 ? " Unlock KYC to also block their CNIC." : ""));
+}
+// Fraud: number, device aur IP sab record. Yeh banda app kholega to Security mein alert aur location aayegi.
+async function markFraud(phone) {
+  const c = customers().find((x) => x.phone === phone);
+  const reason = await askText(`Mark ${c?.name || phone} as FRAUD? Write what happened (date, order, rider). This is saved for a police report.`, "", "e.g. Robbed rider at gunpoint, order KM-10288", "Mark as fraud", "text");
+  if (reason === null) return;
+  const now = Date.now(), base = { kind: "fraud", name: c?.name || "", reason: reason.trim() || "Marked as fraud", createdAt: now };
+  await add("blocks", { ...base, type: "phone", value: phone });
+  for (const d of c?.devices || []) await add("blocks", { ...base, type: "device", value: d });
+  for (const ip of c?.ips || []) await add("blocks", { ...base, type: "ip", value: ip });
+  const ck = await blockCnics(phone, base);
+  toast("Marked as fraud. You will get an alert if they open the app again." + (ck > 0 ? " Their CNIC is on the fraud list too." : ck === -1 ? " Unlock KYC to also put their CNIC on the fraud list." : ""));
+}
+// CNIC bhi block/fraud list mein (sirf uska mushkil-se-ulat-ne-wala nishan). -1 = KYC locked, 0 = KYC nahi, n = kitne
+async function blockCnics(phone, base) {
+  const mine = kycs.filter((k) => norm(k.phone) === norm(phone));
+  if (!mine.length) return 0;
+  if (!kycKey) return -1;
+  await decryptInfos();
+  const keys = [...new Set(mine.map((k) => infoOf(k)?.cnicKey).filter(Boolean))];
+  for (const v of keys) if (!blocks.some((b) => b.type === "cnic" && b.value === v && b.kind === base.kind)) await add("blocks", { ...base, type: "cnic", value: v, phone });
+  return keys.length;
+}
+async function unblockCustomer(phone) {
+  const c = customers().find((x) => x.phone === phone);
+  const vals = new Set([phone, ...(c?.devices || []), ...(c?.ips || [])]);
+  for (const b of blocks.filter((x) => vals.has(x.type === "phone" ? norm(x.value) : x.value) || (x.type === "cnic" && norm(x.phone) === phone))) await remove("blocks", b.id);
+  toast("Customer unblocked.");
+}
+function renderCustomers() {
+  const all = customers();
+  const CF = [["all", "All"], ["repeat", "Repeat"], ["risky", "Cancelled or failed"], ["blocked", "Blocked"]];
+  const m = (c, k) => k === "all" || (k === "repeat" ? c.delivered >= 2 : k === "risky" ? c.failed + c.cancelled > 0 : c.blocked);
+  $("cufilter").innerHTML = CF.map(([k, l]) => `<button class="chip ${cufilter === k ? "on" : ""}" data-f="${k}">${l} ${all.filter((c) => m(c, k)).length}</button>`).join("");
+  const q = $("cusearch").value.trim().toLowerCase();
+  const list = all.filter((c) => m(c, cufilter) && (!q || [c.name, c.phone, ...c.ips, ...c.devices].join(" ").toLowerCase().includes(q))).sort((a, b) => b.last - a.last);
+  $("cuTbl").innerHTML = table(["Customer", "Trust", "KYC", "Orders", "Delivered", "Cancelled / failed", "Total spent", "Last order", "IP addresses", "Devices", "Status", ""],
+    list.map((c) => `<tr><td><div class="who"><span class="av">${esc(initials(c.name))}</span><div><b>${esc(c.name)}</b><small>${esc(c.phone)}</small></div></div></td>
+      <td>${(() => { const tr = trustOf(orders, c.phone, [...c.devices][0], blocks); return `<span class="flag ${TRUST_CLASS[tr.level]}">${esc(TRUST_EN[tr.level])}</span>${tr.avgWait != null ? `<div class="muted xs-t">door wait ${tr.avgWait} min</div>` : ""}`; })()}</td>
+      <td>${(() => { const k = latestKyc(c.phone); return k ? `<a href="#" data-kopen="${esc(k.id)}">${kycPill(k)}</a>` : `<span class="muted xs-t">No KYC</span>`; })()}</td>
+      <td><a href="#" data-go="orders" data-q="${esc(c.phone)}"><b>${c.orders.length}</b> orders</a></td><td>${c.delivered}</td><td>${c.cancelled} / <span style="${c.failed ? "color:var(--red);font-weight:800" : ""}">${c.failed}</span></td>
+      <td>${rs(c.spent)}</td><td>${ago(c.last)}</td><td class="mono">${[...c.ips].slice(0, 2).map(esc).join("<br>") || "-"}</td><td class="mono">${[...c.devices].slice(0, 2).map(esc).join("<br>")}${c.devices.size > 2 ? "<br>+" + (c.devices.size - 2) : ""}</td>
+      <td>${isFraudPhone(c.phone) ? pill("cancelled", "Fraud") : c.blocked ? pill("cancelled", "Blocked") : c.delivered ? pill("delivered", "Active") : pill("new", "New")}</td>
+      <td style="white-space:nowrap"><button class="btn ${c.blocked ? "sec" : "danger"} sm" data-cu="${c.blocked ? "unblock" : "block"}" data-p="${esc(c.phone)}">${c.blocked ? "Unblock" : "Block"}</button>
+        ${isFraudPhone(c.phone) ? "" : `<button class="btn danger sm" data-cu="fraud" data-p="${esc(c.phone)}">Fraud</button>`}</td></tr>`), "No customers match.");
+}
+$("cufilter").addEventListener("click", (e) => { const b = e.target.closest("[data-f]"); if (b) { cufilter = b.dataset.f; renderCustomers(); } });
+$("cusearch").addEventListener("input", renderCustomers);
+$("cuTbl").addEventListener("click", async (e) => { const b = e.target.closest("[data-cu]"); if (!b) return; if (b.dataset.cu === "block") await blockCustomer(b.dataset.p); else if (b.dataset.cu === "fraud") await markFraud(b.dataset.p); else await unblockCustomer(b.dataset.p); });
+
+// ---------------- KYC (customer ki tasdeeq: CNIC + selfie, 24 ghante mein check) ----------------
+const dueOf = (k) => k.dueAt || k.createdAt + (S.kycHours || 24) * HOUR;
+const agoLong = (ts) => { const h = (Date.now() - ts) / HOUR; return h < 24 ? ago(ts) : Math.floor(h / 24) + (Math.floor(h / 24) === 1 ? " day ago" : " days ago"); };
+const dur = (ms) => { const m = Math.max(0, Math.round(ms / 60000)); return m < 60 ? m + " min" : Math.floor(m / 60) + " h" + (m % 60 ? " " + (m % 60) + " min" : ""); };
+const kycPill = (k) => (k ? pill(k.status === "approved" ? "delivered" : k.status === "rejected" ? "cancelled" : "new", k.status === "approved" ? "Verified" : k.status === "rejected" ? "Rejected" : "Pending") : `<span class="muted xs-t">No KYC</span>`);
+const latestKyc = (phone) => kycs.filter((k) => norm(k.phone) === norm(phone)).sort((a, b) => b.createdAt - a.createdAt)[0];
+const kycOfOrder = (o) => (o.kycRef && kycs.find((k) => k.id === o.kycRef)) || latestKyc(o.phone);
+const infoOf = (k) => (k ? kycInfo.get(k.id) : null);
+function dueHtml(k) {
+  if (k.status !== "pending") return k.reviewedAt ? `<span class="muted xs-t">Checked in ${dur(k.reviewedAt - k.createdAt)}</span>` : "";
+  const left = dueOf(k) - Date.now();
+  return left >= 0 ? `<span class="flag ${left < 4 * HOUR ? "" : "green"}">${icon("clock", 12)} ${dur(left)} left</span>` : `<span class="flag red">${icon("clock", 12)} Late by ${dur(-left)}</span>`;
+}
+function kycFlags(k) {
+  const f = [], inf = infoOf(k);
+  if (blocks.some((b) => b.kind === "fraud" && ((b.type === "phone" && norm(b.value) === norm(k.phone)) || (b.type === "device" && b.value === k.device) || (b.type === "ip" && k.ip && b.value === k.ip)))) f.push(["FRAUD match", "red"]);
+  else if (isBlockedPhone(k.phone) || isBlockedDevice(k.device)) f.push(["Blocked number or phone", "red"]);
+  if (inf) {
+    if (blocks.some((b) => b.type === "cnic" && b.value === inf.cnicKey)) f.push([blocks.some((b) => b.kind === "fraud" && b.type === "cnic" && b.value === inf.cnicKey) ? "CNIC on FRAUD list" : "CNIC blocked", "red"]);
+    const same = kycs.filter((x) => x.id !== k.id && norm(x.phone) !== norm(k.phone) && infoOf(x) && infoOf(x).cnicKey === inf.cnicKey);
+    if (same.length) f.push(["Same CNIC used by " + [...new Set(same.map((x) => x.phone))].join(", "), "red"]);
+  } else if (kycInfo.has(k.id)) f.push(["Cannot open (sent before a KYC password reset)", ""]);
+  const before = kycs.filter((x) => x.id !== k.id && norm(x.phone) === norm(k.phone) && x.createdAt < k.createdAt);
+  if (before.some((x) => x.status === "approved")) f.push(["Approved before", "green"]);
+  const rej = before.filter((x) => x.status === "rejected").length;
+  if (rej) f.push([`Rejected ${rej}x before`, ""]);
+  const devOthers = k.device ? [...new Set(kycs.filter((x) => x.device === k.device && norm(x.phone) !== norm(k.phone)).map((x) => x.phone))] : [];
+  if (devOthers.length) f.push(["Same phone used by " + devOthers.join(", "), ""]);
+  const tr = trustOf(orders, k.phone, k.device, blocks);
+  if (tr.failed) f.push([`${tr.failed} failed order${tr.failed > 1 ? "s" : ""}`, "red"]);
+  if (tr.linkedFailed) f.push([`Phone linked to ${tr.linkedFailed} failed order${tr.linkedFailed > 1 ? "s" : ""}`, "red"]);
+  if (!k.loc) f.push(["No location", ""]);
+  else if (S && !inArea(k.loc, S)) f.push(["Sent from outside the area", ""]);
+  return f;
+}
+// Taala kholna: KYC password se (galat password par 5 koshishon ke baad 1 minute ruko)
+async function unlockWith(pw) {
+  const errEl = () => document.getElementById("kperr");
+  if (!pw) return;
+  if (Date.now() < kycLockUntil) { toast(`Too many attempts. Wait ${Math.ceil((kycLockUntil - Date.now()) / 1000)} seconds.`); return; }
+  try {
+    const r = await unlockKycKey(pw, S.kycPrivEnc);
+    kycKey = r.key; kycPk8 = r.pkcs8; kycTries = 0;
+    toast("KYC documents unlocked on this device.");
+    await decryptInfos();
+    rerender();
+    if (openKycId) loadFiles(openKycId);
+  } catch (e) {
+    kycTries++;
+    if (kycTries >= 5) { kycLockUntil = Date.now() + 60000; kycTries = 0; }
+    toast("Wrong KYC password.");
+    if (errEl()) errEl().textContent = "Wrong KYC password.";
+  }
+}
+function lockKyc() { kycKey = null; kycPk8 = null; kycInfo.clear(); kycFiles.clear(); kycTopSig = ""; rerender(); refreshKyc(true); }
+async function decryptInfos() {
+  if (!kycKey) return;
+  let changed = false;
+  for (const k of kycs) {
+    if (kycInfo.has(k.id) || !k.encKey || !k.info) continue;
+    try { kycInfo.set(k.id, JSON.parse((await openKyc(kycKey, k.encKey, { info: k.info })).info)); } catch (e) { kycInfo.set(k.id, null); }
+    changed = true;
+  }
+  if (changed) { kycTopSig = ""; rerender(); refreshKyc(true); }
+}
+async function loadFiles(id) {
+  const k = kycs.find((x) => x.id === id);
+  if (!kycKey || !k) return;
+  const cur = kycFiles.get(id);
+  if (cur && cur !== "error") { refreshKyc(true); return; }
+  kycFiles.set(id, "loading"); refreshKyc(true);
+  try {
+    const parts = await getWhere("kycfiles", "ref", id), obj = {};
+    for (const p of parts) obj[p.part] = (await openKyc(kycKey, k.encKey, { [p.part]: { iv: p.iv, data: p.data, bin: p.bin || "" } }))[p.part];
+    kycFiles.set(id, obj);
+  } catch (e) { console.warn(e); kycFiles.set(id, "error"); }
+  refreshKyc(true);
+}
+let kycTopSig = "";
+function renderKycTop() {
+  const box = $("kycTop");
+  const state = !kycCryptoOk() ? "nocrypto" : !S.kycPublicKey ? "setup" : !kycKey ? "locked" : "open";
+  if (box.contains(document.activeElement) && document.activeElement.tagName === "INPUT") return;
+  const sig = state + (S.kycMode || "");
+  if (sig === kycTopSig) return;
+  kycTopSig = sig;
+  const off = S.kycMode === "off" ? `<div class="alert">${icon("alert", 20)}<div class="grow">KYC is switched off in Settings, so new customers are not asked for their CNIC.</div><button class="btn sm dark" data-go="settings">Settings</button></div>` : "";
+  if (state === "nocrypto") { box.innerHTML = `<div class="alert" style="background:var(--red-soft);color:var(--red)">${icon("alert", 20)}<div class="grow">This browser cannot open KYC documents. Open the admin panel in an up-to-date Chrome over https.</div></div>`; return; }
+  if (state === "setup") {
+    box.innerHTML = off + `<form class="panel" id="kycSetup" autocomplete="off"><header><h2>${icon("lock", 18)} Turn on KYC</h2><span class="muted sm-t">Customers' CNIC and photos are locked with a KYC password that only you know.</span></header>
+      <div class="body stack"><div class="formgrid">
+        <div class="field"><label for="kp1">Choose a KYC password</label><input id="kp1" type="password" autocomplete="new-password" placeholder="At least 8 letters and numbers"></div>
+        <div class="field"><label for="kp2">Repeat the password</label><input id="kp2" type="password" autocomplete="new-password"></div>
+        <button class="btn" type="submit">Turn on KYC</button></div>
+        <div class="err" id="kperr" role="alert"></div>
+        <div class="hint">Write this password down and keep it safe. It is different from your admin PIN. Without it nobody can open the KYC documents, not even us. Until you turn KYC on, customers can order without KYC.</div></div></form>`;
+    return;
+  }
+  if (state === "locked") {
+    box.innerHTML = off + `<form class="panel" id="kycUnlock" autocomplete="off"><header><h2>${icon("lock", 18)} KYC documents are locked</h2><span class="muted sm-t">Enter your KYC password to see CNIC numbers and photos on this device.</span></header>
+      <div class="body stack"><div class="chatbar"><input id="kpw" type="password" autocomplete="current-password" placeholder="KYC password"><button class="btn" type="submit">Unlock</button></div>
+      <div class="err" id="kperr" role="alert"></div>
+      ${cloud ? "" : `<div class="hint">Demo KYC password: <b>demo1234</b></div>`}
+      <div><button class="btn ghost sm" type="button" data-kact="reset" style="padding:0;min-height:30px">Forgot the KYC password?</button></div></div></form>`;
+    return;
+  }
+  box.innerHTML = off + `<div class="alert" style="background:var(--brand-soft);color:var(--brand-d)">${icon("check", 20)}<div class="grow"><b>KYC documents unlocked</b> on this device until you lock them or sign out.</div><button class="btn sec sm" type="button" data-kact="pass">Change KYC password</button><button class="btn sm dark" type="button" data-kact="lock">Lock</button></div>`;
+}
+const KF = [["pending", "Pending"], ["late", "Late (over deadline)"], ["approved", "Verified"], ["rejected", "Rejected"], ["all", "All"]];
+function renderKyc() {
+  renderKycTop();
+  const now = Date.now();
+  const m = (k, f) => f === "all" || (f === "late" ? k.status === "pending" && now > dueOf(k) : k.status === f);
+  $("kfilter").innerHTML = KF.map(([f, l]) => `<button class="chip ${kfilter === f ? "on" : ""}" data-f="${f}">${l} ${kycs.filter((k) => m(k, f)).length}</button>`).join("");
+  const q = $("ksearch").value.trim().toLowerCase();
+  const urgent = kfilter === "pending" || kfilter === "late";
+  const list = kycs.filter((k) => m(k, kfilter) && (!q || [k.name, k.phone, k.device, k.ip, infoOf(k)?.cnic, infoOf(k)?.fullName].join(" ").toLowerCase().includes(q)))
+    .sort((a, b) => (urgent ? a.createdAt - b.createdAt : b.createdAt - a.createdAt));
+  $("kTbl").innerHTML = table(["Customer", "CNIC", "Sent", "Deadline", "Checks", "Status", ""],
+    list.map((k) => { const inf = infoOf(k), fl = kycFlags(k);
+      return `<tr class="click" data-kopen="${esc(k.id)}"><td><div class="who"><span class="av">${esc(initials(k.name))}</span><div><b>${esc(k.name)}</b><small>${esc(k.phone)}</small></div></div></td>
+        <td class="mono">${inf ? esc(inf.cnic) : esc(k.cnicMask || "-")}${inf ? "" : ` <span class="muted">${icon("lock", 12)}</span>`}</td>
+        <td>${fmtDate(k.createdAt)}<div class="muted xs-t">${agoLong(k.createdAt)}</div></td><td>${dueHtml(k)}</td>
+        <td>${fl.length ? `<div class="flags">${fl.slice(0, 3).map(([l, c]) => `<span class="flag ${c}">${esc(l)}</span>`).join("")}${fl.length > 3 ? `<span class="flag">+${fl.length - 3}</span>` : ""}</div>` : `<span class="muted xs-t">None</span>`}</td>
+        <td>${kycPill(k)}</td><td><button class="btn sm ${k.status === "pending" ? "" : "sec"}" data-kopen="${esc(k.id)}">${k.status === "pending" ? "Review" : "Open"}</button></td></tr>`; }),
+    kfilter === "pending" ? "No KYC waiting. New customers' KYC will appear here." : "Nothing here.");
+}
+$("kfilter").addEventListener("click", (e) => { const b = e.target.closest("[data-f]"); if (b) { kfilter = b.dataset.f; renderKyc(); } });
+$("ksearch").addEventListener("input", renderKyc);
+$("kycTop").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const err = (m) => { const el = $("kperr"); if (el) el.textContent = m; };
+  if (e.target.id === "kycSetup") {
+    const p1 = $("kp1").value, p2 = $("kp2").value;
+    if (!strongKycPassword(p1)) return err("Use at least 8 characters with both letters and numbers.");
+    if (p1 !== p2) return err("The two passwords do not match.");
+    err("Creating your KYC lock...");
+    try {
+      const keys = await createKycKeys(p1);
+      await saveSettings(keys);
+      const r = await unlockKycKey(p1, keys.kycPrivEnc);
+      kycKey = r.key; kycPk8 = r.pkcs8; kycTopSig = "";
+      toast("KYC is on. New customers will now send their CNIC and selfie.");
+    } catch (ex) { console.error(ex); err("Could not turn on KYC. Check your internet and try again."); }
+  }
+  if (e.target.id === "kycUnlock") { await unlockWith($("kpw").value); if ($("kpw")) $("kpw").value = ""; }
+});
+$("kycTop").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-kact]");
+  if (!b) return;
+  const a = b.dataset.kact;
+  if (a === "lock") { lockKyc(); toast("KYC documents locked."); }
+  if (a === "pass") {
+    const p1 = await askPassword("New KYC password (at least 8 letters and numbers).", "New KYC password", "Next");
+    if (p1 === null) return;
+    if (!strongKycPassword(p1)) return toast("Use at least 8 characters with both letters and numbers.");
+    const p2 = await askPassword("Type the new KYC password again.", "Repeat", "Change password");
+    if (p2 === null) return;
+    if (p1 !== p2) return toast("The two passwords do not match.");
+    await saveSettings({ kycPrivEnc: await rewrapKycKey(kycPk8, p1) });
+    toast("KYC password changed. Use the new password from now on.");
+  }
+  if (a === "reset") {
+    if (!(await askYes("Reset the KYC password? KYC documents already sent can never be opened again. Customers whose KYC is still pending will be asked to send it again.", "Reset KYC password", true))) return;
+    const p1 = await askPassword("Choose a new KYC password (at least 8 letters and numbers).", "New KYC password", "Next");
+    if (p1 === null) return;
+    if (!strongKycPassword(p1)) return toast("Use at least 8 characters with both letters and numbers.");
+    const p2 = await askPassword("Type the new KYC password again.", "Repeat", "Reset");
+    if (p2 === null || p1 !== p2) return toast("The two passwords do not match.");
+    const keys = await createKycKeys(p1);
+    await saveSettings(keys);
+    for (const k of kycs.filter((x) => x.status === "pending")) await update("kyc", k.id, { status: "rejected", reviewedAt: Date.now(), reason: "Please send your KYC again (system update)" });
+    kycInfo.clear(); kycFiles.clear();
+    const r = await unlockKycKey(p1, keys.kycPrivEnc);
+    kycKey = r.key; kycPk8 = r.pkcs8; kycTopSig = "";
+    toast("New KYC password set.");
+  }
+});
+
+// KYC review (approve / reject)
+let openKycId = null;
+function kycHtml(k) {
+  const inf = infoOf(k), files = kycFiles.get(k.id), fl = kycFlags(k), tr = trustOf(orders, k.phone, k.device, blocks);
+  const hist = kycs.filter((x) => x.id !== k.id && (norm(x.phone) === norm(k.phone) || (k.device && x.device === k.device) || (inf && infoOf(x) && infoOf(x).cnicKey === inf.cnicKey))).sort((a, b) => b.createdAt - a.createdAt);
+  const photo = (part, label) => `<figure class="kfig">${files && typeof files === "object" && files[part] ? `<img src="${esc(files[part])}" alt="${label}" data-zoom="1">`
+    : `<div class="kph">${!kycKey ? icon("lock", 22) : files === "error" ? "Could not open" : "Opening..."}</div>`}<figcaption>${label}</figcaption></figure>`;
+  return `<div class="sh"><div><h3>KYC · ${esc(k.name)}</h3><div class="muted sm-t">Sent ${fmtDate(k.createdAt)} (${ago(k.createdAt)})</div></div>${kycPill(k)}</div>
+    <div class="flags">${dueHtml(k)}${fl.map(([l, c]) => `<span class="flag ${c}">${esc(l)}</span>`).join("")}</div>
+    <div><div class="sec-title">Customer</div><dl class="kv" style="margin-top:6px">
+      <dt>Name</dt><dd>${esc(k.name)}</dd><dt>Mobile</dt><dd>${esc(k.phone)}</dd>
+      <dt>CNIC</dt><dd class="mono">${inf ? `<b>${esc(inf.cnic)}</b>` : esc(k.cnicMask || "-") + (kycKey ? "" : " · locked")}</dd>
+      ${inf ? `<dt>Home address</dt><dd>${esc([inf.area, inf.address].filter(Boolean).join(", "))}</dd>` : ""}
+      <dt>Orders</dt><dd>${tr.total} orders · ${tr.delivered} delivered · ${tr.cancelled} cancelled · ${tr.failed} failed <span class="flag ${TRUST_CLASS[tr.level]}">${esc(TRUST_EN[tr.level])}</span></dd>
+      <dt>Sent from</dt><dd>${loc(k.loc, "Where they were when sending")}${k.loc && S ? ` · ${distKm(k.loc, S.center).toFixed(1)} km from centre` : ""}</dd>
+      <dt>IP address</dt><dd class="mono">${esc(k.ip || "Not available")}</dd><dt>Device ID</dt><dd class="mono">${esc(k.device || "-")}</dd><dt>Phone type</dt><dd>${esc(k.ua || "-")}</dd>
+      ${k.status !== "pending" ? `<dt>Decision</dt><dd>${k.status === "approved" ? "Verified" : "Rejected"} on ${fmtDate(k.reviewedAt)}${k.reason ? " · reason: " + esc(k.reason) : ""}</dd>` : ""}</dl>
+      <div class="oactions" style="margin-top:8px"><a class="btn sec sm" href="tel:${esc(k.phone)}">${icon("phone", 15)} Call to confirm</a><a class="btn sec sm" href="${esc(wa(k.phone))}" target="_blank" rel="noopener">${icon("message", 15)} WhatsApp</a></div></div>
+    <div><div class="sec-title">Documents</div>
+      ${kycKey ? "" : `<div class="chatbar" style="margin-top:8px"><input id="kpwInline" type="password" placeholder="KYC password to open the documents" autocomplete="current-password"><button class="btn" data-kact="unlock">Unlock</button></div>${cloud ? "" : `<div class="hint">Demo KYC password: <b>demo1234</b></div>`}`}
+      <div class="kfigs">${photo("front", "CNIC front")}${photo("back", "CNIC back")}${photo("selfie", "Selfie")}</div>
+      <div class="hint">Check that the face on the CNIC matches the selfie, the CNIC number matches the card, the card is not expired, and call the number to confirm it belongs to them.</div></div>
+    ${hist.length ? `<div><div class="sec-title">Other KYC from the same number, phone or CNIC</div><div class="tl">${hist.map((x) => `<div><span>${fmtDate(x.createdAt)} · ${esc(x.name)} · ${esc(x.phone)}</span><span>${kycPill(x)} <a href="#" data-kopen="${esc(x.id)}">Open</a></span></div>`).join("")}</div></div>` : ""}
+    <div class="btns" style="flex-wrap:wrap">
+      ${k.status !== "approved" ? `<button class="btn" data-kact="approve">${icon("check", 16)} Approve</button>` : ""}
+      ${k.status !== "rejected" ? `<button class="btn danger" data-kact="reject">${k.status === "approved" ? "Remove verification" : "Reject"}</button>` : ""}
+      <button class="btn sec" data-kact="close">Close</button></div>`;
+}
+function openKycDrawer(id) {
+  if (!kycs.some((x) => x.id === id)) return;
+  closeDrawer(true); closeKyc(true);
+  openKycId = id;
+  const ov = document.createElement("div");
+  ov.className = "modal center"; ov.id = "kdrawer";
+  ov.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"></div>`;
+  document.body.appendChild(ov);
+  holdSheet();
+  refreshKyc(true);
+  ov.addEventListener("click", async (e) => {
+    if (e.target === ov) return closeKyc();
+    const z = e.target.closest("[data-zoom]");
+    if (z) return zoomImg(z.src);
+    const o = e.target.closest("[data-kopen]");
+    if (o) { e.preventDefault(); return openKycDrawer(o.dataset.kopen); }
+    const b = e.target.closest("[data-kact]");
+    if (!b) return;
+    const k = kycs.find((x) => x.id === openKycId);
+    if (!k) return;
+    try {
+      const a = b.dataset.kact;
+      if (a === "close") closeKyc();
+      if (a === "unlock") await unlockWith(($("kpwInline") || {}).value);
+      if (a === "approve" && await askYes(`Verify ${k.name} (${k.phone})? They will be able to place orders.`, "Approve")) { await update("kyc", k.id, { status: "approved", reviewedAt: Date.now(), reason: "" }); toast("KYC approved. The customer can order now."); }
+      if (a === "reject") {
+        const reasons = ["CNIC photo is not clear", "Selfie does not match the CNIC", "CNIC number does not match the card", "CNIC is expired", "Could not confirm the mobile number", "Other reason"];
+        let r = await askChoice(`Why are you rejecting ${k.name}'s KYC? The customer will see this reason.`, reasons.map((x) => ({ label: x, value: x })));
+        if (!r) return;
+        if (r === "Other reason") { r = await askText("Write the reason. The customer will see it.", "", "Reason", "Reject", "text"); if (r === null || !r.trim()) return; r = r.trim(); }
+        await update("kyc", k.id, { status: "rejected", reviewedAt: Date.now(), reason: r });
+        toast("KYC rejected. The customer can send it again.");
+      }
+    } catch (err) { console.error(err); toast("Action failed. Please try again."); }
+  });
+  loadFiles(id);
+}
+function closeKyc(silent) { document.getElementById("kdrawer")?.remove(); openKycId = null; if (!silent) dropSheet(); }
+let kycSig = "";
+function refreshKyc(force) {
+  const d = document.getElementById("kdrawer");
+  if (!d || !openKycId) return;
+  const k = kycs.find((x) => x.id === openKycId);
+  if (!k) return;
+  if (d.contains(document.activeElement) && document.activeElement.tagName === "INPUT") return;
+  const sig = JSON.stringify(k) + blocks.length + orders.length + (kycKey ? 1 : 0);
+  if (!force && sig === kycSig) return;
+  kycSig = sig;
+  d.querySelector(".sheet").innerHTML = kycHtml(k);
+}
+function zoomImg(src) {
+  const ov = document.createElement("div");
+  ov.className = "modal center"; ov.style.zIndex = "90";
+  ov.innerHTML = `<div class="sheet"><img class="receipt" alt="" src="${esc(src)}" style="max-height:80vh"><button class="btn sec block" type="button">Close</button></div>`;
+  const close = modalBack(ov);
+  ov.addEventListener("click", (ev) => { if (ev.target === ov || ev.target.closest("button")) close(); });
+  document.body.appendChild(ov);
+}
+document.addEventListener("click", (e) => {
+  const k = e.target.closest("[data-kopen]");
+  if (k && !e.target.closest("#kdrawer")) { e.preventDefault(); openKycDrawer(k.dataset.kopen); }
+});
+
+// ---------------- riders ----------------
+function renderRiders() {
+  $("rcount").textContent = riders.length + " registered";
+  $("rTbl").innerHTML = table(["Rider", "Mobile", "Status", "Deliveries", "Avg. time", "Rating", "Cash in hand", ""],
+    riders.map((r) => {
+      const d = orders.filter((o) => o.riderId === r.id && o.status === "delivered"), rated = d.filter((o) => o.rating);
+      const cash = riderCash(r.id).inHand;
+      return `<tr><td><div class="who"><span class="av">${esc(initials(r.name))}</span><div><b>${esc(r.name)}</b><small>Joined ${fmtDate(r.createdAt).split(",")[0]}</small></div></div></td>
+        <td>${esc(r.phone)}</td><td>${pill(r.active === false ? "cancelled" : riderState(r), stateLabel(r))}</td>
+        <td>${d.filter((o) => o.deliveredAt >= startOfToday()).length} today · ${d.length} total</td>
+        <td>${avg(d.map((o) => mins(o.acceptedAt, o.deliveredAt)).filter((x) => x != null)) || "-"} min</td>
+        <td>${rated.length ? (rated.reduce((s, o) => s + o.rating, 0) / rated.length).toFixed(1) + " ★ (" + rated.length + ")" : "-"}</td>
+        <td style="${cash > S.cashLimit ? "color:var(--red);font-weight:800" : ""}">${rs(cash)}</td>
+        <td style="white-space:nowrap"><button class="btn sec sm" data-r="pin" data-id="${esc(r.id)}">${icon("key", 15)} Reset PIN</button>
+          <button class="btn sec sm" data-r="pause" data-id="${esc(r.id)}">${r.active === false ? "Resume" : "Pause"}</button>
+          <button class="btn danger sm" data-r="del" data-id="${esc(r.id)}" aria-label="Remove">${icon("trash", 15)}</button></td></tr>`;
+    }), "No riders yet. Register your first rider above.");
+}
+$("genPin").addEventListener("click", () => { $("rpin").value = String(Math.floor(1000 + Math.random() * 9000)); });
+$("rform").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = $("rname").value.trim(), phone = norm($("rphone").value), pin = $("rpin").value.trim();
+  const err = (m) => { $("rerr").textContent = m; };
+  err("");
+  if (!name) return err("Enter the rider's name.");
+  if (!validPhone(phone)) return err("Enter a valid mobile number, for example 03001234567.");
+  if (!/^\d{4,8}$/.test(pin)) return err("The PIN must be 4 to 8 digits.");
+  if (riders.some((r) => norm(r.phone) === phone)) return err("A rider with this mobile number is already registered.");
+  try {
+    await add("riders", { name, phone, pinHash: riderHash(phone, pin), active: true, online: false, lastSeen: 0, createdAt: Date.now() });
+    $("rform").reset();
+    toast(`${name} registered. Give them the mobile number and PIN ${pin}.`);
+  } catch { err("Could not register the rider. Check your internet and try again."); }
+});
+$("rTbl").addEventListener("click", async (e) => {
+  const b = e.target.closest("button[data-r]");
+  if (!b) return;
+  const r = riders.find((x) => x.id === b.dataset.id);
+  if (!r) return;
+  if (b.dataset.r === "pin") {
+    const p = await askText(`Set a new PIN for ${r.name} (4 to 8 digits).`, "", "New PIN", "Save PIN");
+    if (p === null) return;
+    if (!/^\d{4,8}$/.test(p.trim())) return toast("The PIN must be 4 to 8 digits.");
+    await update("riders", r.id, { pinHash: riderHash(r.phone, p.trim()) });
+    toast(`PIN updated for ${r.name}. They are signed out on other devices only after their next sign-in.`);
+  }
+  if (b.dataset.r === "pause") {
+    const paused = r.active === false;
+    if (!paused && !(await askYes(`Pause ${r.name}? They will be signed out and cannot take orders until you resume them.`, "Pause rider"))) return;
+    await update("riders", r.id, { active: paused, online: false });
+    toast(paused ? "Rider resumed." : "Rider paused.");
+  }
+  if (b.dataset.r === "del" && await askYes(`Remove ${r.name}? Their past deliveries and cash records stay.`, "Remove rider", true)) { await remove("riders", r.id); toast("Rider removed."); }
+});
+
+// ---------------- cash ----------------
+function renderCash() {
+  const rows = riders.map((r) => ({ r, ...riderCash(r.id) }));
+  const fails = orders.filter((o) => o.status === "failed").slice().reverse();
+  $("cashKpis").innerHTML = [["Cash with riders", rs(rows.reduce((s, x) => s + Math.max(0, x.inHand), 0))], ["Deposited today", rs(settles.filter((x) => x.createdAt >= startOfToday()).reduce((s, x) => s + num(x.amount), 0))],
+    ["Collected today", rs(orders.filter((o) => o.deliveredAt >= startOfToday()).reduce((s, o) => s + collected(o), 0))], ["Failed order loss (all)", rs(fails.reduce((s, o) => s + num(o.bill), 0))]]
+    .map(([l, v]) => `<div class="kpi"><span>${l}</span><b>${v}</b></div>`).join("");
+  $("cashTbl").innerHTML = table(["Rider", "Collected", "Deposited", "Cash in hand", ""],
+    rows.map((x) => `<tr><td><b>${esc(x.r.name)}</b><div class="muted xs-t">${esc(x.r.phone)}</div></td><td>${rs(x.collected)}</td><td>${rs(x.deposited)}</td>
+      <td style="${x.inHand > S.cashLimit ? "color:var(--red);font-weight:800" : "font-weight:800"}">${rs(x.inHand)}</td>
+      <td><button class="btn sm" data-dep="${esc(x.r.id)}">Record deposit</button></td></tr>`), "No riders yet.");
+  $("depTbl").innerHTML = table(["Date", "Rider", "Amount", "Note"], settles.slice().reverse().map((x) => `<tr><td>${fmtDate(x.createdAt)}</td><td>${esc(x.rider)}</td><td><b>${rs(x.amount)}</b></td><td>${esc(x.note || "")}</td></tr>`), "No deposits yet.");
+  $("failTbl").innerHTML = table(["Order", "Customer", "Rider", "Bill", "Reason"], fails.map((o) => `<tr class="click" data-open="${esc(o.id)}"><td><b>${esc(orderNo(o))}</b><div class="muted xs-t">${fmtDate(o.failedAt || o.createdAt)}</div></td><td>${esc(o.name)}<div class="muted xs-t">${esc(o.phone)}</div></td><td>${esc(o.rider || "-")}</td><td>${o.bill ? rs(o.bill) : "-"}</td><td style="white-space:normal;min-width:160px">${esc(o.failReason || "")}</td></tr>`), "No failed orders.");
+}
+$("cashTbl").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-dep]");
+  if (!b) return;
+  const r = riders.find((x) => x.id === b.dataset.dep), c = riderCash(r.id);
+  const amt = await askText(`How much cash did ${r.name} hand in? (In hand: ${rs(c.inHand)})`, String(Math.max(0, c.inHand)), "Amount in Rs", "Record deposit");
+  if (amt === null) return;
+  const v = num(amt);
+  if (!v) return toast("Enter an amount.");
+  await add("settlements", { riderId: r.id, rider: r.name, amount: v, note: "", createdAt: Date.now() });
+  toast(`Recorded ${rs(v)} from ${r.name}.`);
+});
+
+// ---------------- security ----------------
+const alertTitle = (a) => ({ fraud_seen: "Fraud person opened the app", fraud_order: "Fraud person tried to order", fraud_kyc: "Fraud person tried to register (KYC)", rider_sos: "Rider emergency" })[a.type] || "Alert";
+function fraudIds() {
+  const g = new Map();
+  blocks.filter((b) => b.kind === "fraud").forEach((b) => {
+    const k = b.name || b.reason;
+    const x = g.get(k) || { name: b.name, reason: b.reason, createdAt: b.createdAt, phones: new Set(), devices: new Set(), ips: new Set(), ids: [] };
+    if (b.type === "cnic") { if (b.phone) x.phones.add(norm(b.phone)); x.cnic = true; }
+    else (b.type === "phone" ? x.phones : b.type === "device" ? x.devices : x.ips).add(b.value);
+    x.ids.push(b.id);
+    g.set(k, x);
+  });
+  return [...g.values()];
+}
+const matchesFraud = (v) => blocks.some((b) => b.kind === "fraud" && (b.value === v.device || (v.phone && norm(b.value) === norm(v.phone)) || (v.ip && b.value === v.ip)));
+function renderSecurity() {
+  $("alTbl").innerHTML = table(["Time", "Alert", "Person", "Matched by", "IP", "Device", "Location", "Details", ""],
+    alerts.slice().reverse().map((a) => `<tr style="${a.seen ? "" : "background:#FFF6F5"}"><td>${fmtDate(a.ts)}<div class="muted xs-t">${ago(a.ts)}</div></td><td><b style="color:var(--red)">${esc(alertTitle(a))}</b></td>
+      <td>${esc(a.name || "-")}<div class="muted xs-t">${esc(a.phone || "")}</div></td><td>${esc(a.match || (a.type === "rider_sos" ? a.rider : "-"))}</td><td class="mono">${esc(a.ip || "-")}</td><td class="mono">${esc(a.device || "-")}</td>
+      <td>${loc(a, "Open location")}</td><td style="white-space:normal;min-width:180px">${esc(a.reason || "")}</td>
+      <td>${a.seen ? `<span class="muted xs-t">Seen</span>` : `<button class="btn sm" data-al="${esc(a.id)}">Mark seen</button>`}</td></tr>`), "No security alerts.");
+  const fr = fraudIds();
+  $("frTbl").innerHTML = table(["Name", "Phones", "Devices", "IPs", "What happened", "Last seen", ""],
+    fr.map((x, i) => {
+      const seen = visits.filter((v) => x.devices.has(v.device) || x.phones.has(norm(v.phone)) || x.ips.has(v.ip)).sort((a, b) => b.ts - a.ts)[0];
+      return `<tr><td><b>${esc(x.name || "-")}</b><div class="muted xs-t">Marked ${fmtDate(x.createdAt)}</div></td><td class="mono">${[...x.phones].map(esc).join("<br>") || "-"}</td><td class="mono">${[...x.devices].map(esc).join("<br>") || "-"}</td><td class="mono">${[...x.ips].map(esc).join("<br>") || "-"}</td>
+        <td style="white-space:normal;min-width:200px">${esc(x.reason)}</td><td>${seen ? `${ago(seen.ts)}<br>${loc(seen, "Location")}` : "-"}</td>
+        <td style="white-space:nowrap"><button class="btn sec sm" data-fr="report" data-i="${i}">${icon("download", 15)} Police report</button> <button class="btn ghost sm" data-fr="remove" data-i="${i}">Remove</button></td></tr>`;
+    }), "Nobody is marked as fraud.");
+  $("viTbl").innerHTML = table(["Time", "Customer", "IP", "Device", "Phone type", "Location"],
+    visits.slice(-150).reverse().map((v) => `<tr style="${matchesFraud(v) ? "background:#FFF6F5" : ""}"><td>${fmtDate(v.ts)}</td><td>${esc(v.name || "Unknown")}<div class="muted xs-t">${esc(v.phone || "")}</div>${matchesFraud(v) ? `<span class="flag red">FRAUD</span>` : ""}</td>
+      <td class="mono">${esc(v.ip || "-")}</td><td class="mono">${esc(v.device)}</td><td>${esc(v.ua || "-")}</td><td>${v.lat != null ? loc(v, "Map") : "Location off"}</td></tr>`), "No app opens recorded yet.");
+}
+$("alTbl").addEventListener("click", async (e) => { const b = e.target.closest("[data-al]"); if (b) await update("alerts", b.dataset.al, { seen: true }); });
+$("frTbl").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-fr]");
+  if (!b) return;
+  const x = fraudIds()[Number(b.dataset.i)];
+  if (b.dataset.fr === "remove") {
+    if (!(await askYes(`Remove the fraud mark for ${x.name || "this person"}?`, "Remove", true))) return;
+    for (const id of x.ids) await remove("blocks", id);
+    return toast("Fraud mark removed.");
+  }
+  // Police (FIR) ke liye: tamam orders, app opens aur alerts aik file mein
+  const hit = (r) => x.devices.has(r.device) || x.phones.has(norm(r.phone)) || x.ips.has(r.ip);
+  const d = (ts) => (ts ? new Date(ts).toLocaleString("en-GB") : "");
+  const rows = [["Kot Momin Express: record for police report"], ["Name", x.name], ["Phones", [...x.phones].join(" ")], ["Devices", [...x.devices].join(" ")], ["IP addresses", [...x.ips].join(" ")], ["What happened", x.reason], ["Marked on", d(x.createdAt)], [],
+    ...kycs.filter((k) => x.phones.has(norm(k.phone)) || x.devices.has(k.device)).map((k) => { const inf = infoOf(k); return ["KYC (" + (k.status || "") + ")", `${k.name} | CNIC: ${inf ? inf.cnic : (k.cnicMask || "") + " (unlock KYC to see the full number)"} | address: ${inf ? [inf.area, inf.address].filter(Boolean).join(", ") : "-"} | sent ${d(k.createdAt)} from ${k.loc ? `https://www.google.com/maps?q=${k.loc.lat},${k.loc.lng}` : "unknown location"} | IP ${k.ip || "-"} | device ${k.device || "-"}`]; }), [],
+    ["Type", "Time", "Order / alert", "Phone", "IP", "Device", "Latitude", "Longitude", "Map link", "Details"]];
+  orders.filter(hit).forEach((o) => {
+    rows.push(["Order placed", d(o.createdAt), orderNo(o), o.phone, o.ip, o.device, o.orderLoc?.lat ?? "", o.orderLoc?.lng ?? "", o.orderLoc ? `https://www.google.com/maps?q=${o.orderLoc.lat},${o.orderLoc.lng}` : "", `${o.items} | to: ${o.area || ""} ${o.address} | status: ${o.status} ${o.failReason || ""} | rider: ${o.rider || ""}`]);
+    if (o.dest) rows.push(["Delivery pin", d(o.createdAt), orderNo(o), o.phone, "", "", o.dest.lat, o.dest.lng, `https://www.google.com/maps?q=${o.dest.lat},${o.dest.lng}`, ""]);
+  });
+  visits.filter(hit).forEach((v) => rows.push(["App opened", d(v.ts), "", v.phone, v.ip, v.device, v.lat ?? "", v.lng ?? "", v.lat != null ? `https://www.google.com/maps?q=${v.lat},${v.lng}` : "", v.ua || ""]));
+  alerts.filter(hit).forEach((a) => rows.push([alertTitle(a), d(a.ts), "", a.phone, a.ip, a.device, a.lat ?? "", a.lng ?? "", a.lat != null ? `https://www.google.com/maps?q=${a.lat},${a.lng}` : "", a.reason || ""]));
+  const csv = rows.map((r) => r.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv" }));
+  a.download = `police-report-${(x.name || "fraud").replace(/\W+/g, "-")}.csv`;
+  a.click();
+  toast("Police report downloaded.");
+});
+
+// ---------------- live map: dispatch ----------------
+const ML = [["riders", "Riders"], ["active", "Active orders"], ["today", "Today's orders"], ["alerts", "Security alerts"]];
+let mapOn = { riders: true, active: true, today: true, alerts: false }, mapP = null;
+try { mapOn = { ...mapOn, ...JSON.parse(localStorage.getItem("kmd_map_layers") || "{}") }; } catch (e) {}
+// Rider ki taaza jagah: delivery wale order se ya rider ki apni (khaali hone par)
+function riderPos(r) {
+  const ord = orders.find((o) => o.riderId === r.id && OUT.includes(o.status) && o.riderLoc);
+  const a = ord ? ord.riderLoc : null, b = r.loc || null;
+  return a && (!b || (a.ts || 0) >= (b.ts || 0)) ? a : b;
+}
+const posAge = (p) => (p && p.ts ? Date.now() - p.ts : Infinity);
+function riderCard(r) {
+  const p = riderPos(r), cash = riderCash(r.id).inHand, mineNow = orders.filter((o) => o.riderId === r.id && OUT.includes(o.status));
+  const ov = document.createElement("div");
+  ov.className = "modal center";
+  ov.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"><div class="sh"><div><h3>${esc(r.name)}</h3><div class="muted sm-t">${esc(r.phone)} · ${stateLabel(r)}</div></div>${pill(r.active === false ? "offline" : riderState(r), stateLabel(r))}</div>
+    <dl class="kv"><dt>Position</dt><dd>${p ? `${loc(p, "Open in Google Maps")} · ${ago(p.ts)}` : "Not shared yet"}</dd><dt>Cash in hand</dt><dd>${rs(cash)}</dd>
+    <dt>Now carrying</dt><dd>${mineNow.length ? mineNow.map((o) => `<a href="#" data-open="${esc(o.id)}">${esc(orderNo(o))}</a> (${esc(STATUS[o.status])})`).join(", ") : "Nothing"}</dd></dl>
+    <div class="btns"><a class="btn sec" href="tel:${esc(r.phone)}">${icon("phone", 16)} Call</a><a class="btn sec" href="${esc(wa(r.phone))}" target="_blank" rel="noopener">${icon("message", 16)} WhatsApp</a><button class="btn" type="button" data-x="1">Close</button></div></div>`;
+  const close = modalBack(ov);
+  ov.addEventListener("click", (e) => {
+    const o = e.target.closest("[data-open]");
+    if (o) { e.preventDefault(); e.stopPropagation(); close(); setTimeout(() => openOrder(o.dataset.open), 60); return; }
+    if (e.target === ov || e.target.closest("[data-x]")) close();
+  });
+  document.body.appendChild(ov);
+}
+async function renderMap() {
+  $("mlayers").innerHTML = ML.map(([k, l]) => `<button class="chip ${mapOn[k] ? "on" : ""}" data-ml="${k}">${icon(mapOn[k] ? "check" : "plus", 14)} ${l}</button>`).join("");
+  const act = orders.filter((o) => ACTIVE.includes(o.status)), items = [], dots = [];
+  const live = riders.filter((r) => r.active !== false && riderState(r) !== "offline");
+  if (mapOn.riders) live.forEach((r) => {
+    const p = riderPos(r);
+    if (!p) return;
+    const stale = posAge(p) > 10 * 60000, busy = riderState(r) === "busy";
+    items.push({ lat: p.lat, lng: p.lng, icon: "truck", cls: stale ? "stale" : busy ? "live" : "idle", key: "r" + r.id, label: r.name.split(" ")[0], permanent: true, z: 600, onClick: () => riderCard(r) });
+  });
+  if (mapOn.active) act.forEach((o) => { if (o.dest) items.push({ lat: o.dest.lat, lng: o.dest.lng, icon: "home", cls: o.status === "new" ? "warn" : "dest", key: "o" + o.id, label: `${orderNo(o)} · ${o.name} · ${STATUS[o.status]}`, onClick: () => openOrder(o.id) }); });
+  const today = orders.filter((o) => o.createdAt >= startOfToday() && !ACTIVE.includes(o.status) && o.dest);
+  if (mapOn.today) today.forEach((o) => dots.push({ lat: o.dest.lat, lng: o.dest.lng, color: o.status === "delivered" ? "#0B7A4B" : o.status === "failed" ? "#C0392B" : "#8A968F", label: `${orderNo(o)} · ${o.name} · ${STATUS[o.status]}`, onClick: () => openOrder(o.id) }));
+  if (mapOn.alerts) alerts.filter((a) => a.lat != null).slice(-60).forEach((a) => dots.push({ lat: a.lat, lng: a.lng, color: "#C0392B", r: 8, label: `${alertTitle(a)} · ${a.name || a.phone || ""} · ${ago(a.ts)}` }));
+  $("mapNote").textContent = `${live.length} rider${live.length === 1 ? "" : "s"} online · ${act.length} active order${act.length === 1 ? "" : "s"} · ${today.filter((o) => o.status === "delivered").length} delivered today · area ${S.radiusKm} km`;
+  // side lists
+  $("mRidersCount").textContent = `${live.length} of ${riders.length} online`;
+  const rOrder = { busy: 0, online: 1, offline: 2 };
+  $("mRiders").innerHTML = riders.length ? riders.slice().sort((a, b) => rOrder[riderState(a)] - rOrder[riderState(b)]).map((r) => {
+    const p = riderPos(r), st = riderState(r);
+    return `<button class="mrow" type="button" data-mr="${esc(r.id)}"><span class="av">${esc(initials(r.name))}</span><span class="grow"><b>${esc(r.name)}</b><small>${st === "offline" ? "Offline" : p ? `Position ${ago(p.ts)}` : "Position not shared yet"} · cash ${rs(riderCash(r.id).inHand)}</small></span>${pill(r.active === false ? "offline" : st, stateLabel(r))}</button>`;
+  }).join("") : `<div class="muted sm-t">No riders yet.</div>`;
+  $("mOrdersCount").textContent = String(act.length);
+  $("mOrders").innerHTML = act.length ? act.slice().reverse().map((o) => `<button class="mrow" type="button" data-open="${esc(o.id)}"><span class="grow"><b>${esc(orderNo(o))} · ${esc(o.name)}</b><small>${esc(o.rider || "No rider yet")} · ${ago(o.createdAt)}</small></span>${oPill(o)}</button>`).join("") : `<div class="muted sm-t">No active orders.</div>`;
+  if (!mapP) mapP = createMap($("bigmap"), S, { free: true, controls: ["area", "full"] }).catch(() => null);
+  const m = await mapP;
+  if (!m) { $("mapNote").textContent = "The map could not load. Check your internet connection."; return; }
+  m.setArea(S); m.setMarkers(items, true, true); m.dots(dots);
+}
+$("mlayers").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-ml]");
+  if (!b) return;
+  mapOn[b.dataset.ml] = !mapOn[b.dataset.ml];
+  try { localStorage.setItem("kmd_map_layers", JSON.stringify(mapOn)); } catch (err) {}
+  renderMap();
+});
+$("mRiders").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-mr]");
+  if (!b) return;
+  const r = riders.find((x) => x.id === b.dataset.mr), p = r && riderPos(r), m = mapP && (await mapP);
+  if (p && m) { m.focus(p.lat, p.lng, 16); window.scrollTo({ top: 0, behavior: "smooth" }); } else if (r) riderCard(r);
+});
+
+// ---------------- service area editor (Settings) ----------------
+let areaP = null, areaDirty = false;
+const areaVal = () => ({ center: { lat: Number($("s_lat").value), lng: Number($("s_lng").value) }, radiusKm: Number($("s_radiusKm").value) });
+const areaOk = (a) => a.center.lat > 20 && a.center.lat < 40 && a.center.lng > 60 && a.center.lng < 80 && a.radiusKm >= 0.5 && a.radiusKm <= 50;
+function paintAreaStats() {
+  const a = areaVal();
+  if (!areaOk(a)) { $("areaStats").innerHTML = `<span class="flag red">Check the centre and radius</span>`; return; }
+  const pins = orders.filter((o) => o.dest), inside = pins.filter((o) => distKm(o.dest, a.center) <= a.radiusKm).length;
+  const outsideOpens = visits.filter((v) => v.lat != null && distKm(v, a.center) > a.radiusKm);
+  const far = pins.reduce((mx, o) => Math.max(mx, distKm(o.dest, a.center)), 0);
+  $("areaStats").innerHTML = `<span><b>${(Math.PI * a.radiusKm * a.radiusKm).toFixed(0)} km²</b> area</span><span><b>${inside}</b> of ${pins.length} past orders inside</span><span><b>${pins.length - inside}</b> past orders would be outside</span><span><b>${outsideOpens.length}</b> recent app opens from outside</span>${pins.length ? `<span>Furthest order <b>${far.toFixed(1)} km</b></span>` : ""}${areaDirty ? `<span class="flag">Not saved yet</span>` : ""}`;
+}
+function paintAreaMap(fit) {
+  if (!areaP) return;
+  areaP.then((m) => {
+    if (!m) return;
+    const a = areaVal();
+    if (!areaOk(a)) return;
+    m.setArea(a);
+    const pins = orders.filter((o) => o.dest).slice(-300).map((o) => ({ lat: o.dest.lat, lng: o.dest.lng, color: "#0B7A4B", r: 5, label: `${orderNo(o)} · ${o.name}` }));
+    const out = visits.filter((v) => v.lat != null && distKm(v, a.center) > a.radiusKm).slice(-150).map((v) => ({ lat: v.lat, lng: v.lng, color: "#E08A00", r: 5, label: `App opened from outside · ${v.name || "unknown"} · ${ago(v.ts)}` }));
+    m.dots(pins.concat(out));
+    if (fit) m.fitArea();
+  });
+}
+function initAreaEditor() {
+  if (areaP || !$("v-settings") || $("v-settings").hidden) return;
+  areaP = createMap($("areaMap"), S, { free: true, editable: true, controls: ["locate", "area", "full"], centreLabel: "Centre (drag me)", youLabel: "You",
+    onCentre: (c) => { $("s_lat").value = c.lat.toFixed(5); $("s_lng").value = c.lng.toFixed(5); areaDirty = true; paintAreaStats(); },
+    onLocate: (p) => moveCentre(p) }).catch(() => null);
+  areaP.then((m) => {
+    if (!m) { $("areaMap").hidden = true; return; }
+    m.onClick((p) => moveCentre(p));
+    paintAreaMap(true);
+  });
+}
+function moveCentre(p) {
+  $("s_lat").value = p.lat.toFixed(5); $("s_lng").value = p.lng.toFixed(5);
+  areaDirty = true; paintAreaMap(); paintAreaStats();
+}
+function syncRadius(v, from) {
+  const r = Math.max(0.5, Math.min(50, Number(v) || 0.5));
+  if (from !== "range") $("s_radiusRange").value = String(r);
+  if (from !== "num") $("s_radiusKm").value = String(r);
+  areaDirty = true; paintAreaMap(); paintAreaStats();
+}
+$("s_radiusRange").addEventListener("input", (e) => syncRadius(e.target.value, "range"));
+$("s_radiusRange").addEventListener("change", () => paintAreaMap(true)); // chhorne par poora daira nazar aaye
+$("s_radiusKm").addEventListener("change", () => paintAreaMap(true));
+$("s_radiusKm").addEventListener("input", (e) => { if (Number(e.target.value) >= 0.5) syncRadius(e.target.value, "num"); });
+$("s_lat").addEventListener("input", () => { areaDirty = true; paintAreaMap(); paintAreaStats(); });
+$("s_lng").addEventListener("input", () => { areaDirty = true; paintAreaMap(); paintAreaStats(); });
+$("resetArea").addEventListener("click", () => { moveCentre(DEFAULTS.center); syncRadius(DEFAULTS.radiusKm); paintAreaMap(true); toast("Back to Kot Momin centre and 5.5 km. Press Save service area to keep it."); });
+$("saveArea").addEventListener("click", async () => {
+  const a = areaVal();
+  if (!areaOk(a)) return toast("Radius must be 0.5 to 50 km and the centre must be in Pakistan.");
+  try {
+    await saveSettings({ center: { lat: +a.center.lat.toFixed(6), lng: +a.center.lng.toFixed(6) }, radiusKm: a.radiusKm, radiusSet: true });
+    areaDirty = false; paintAreaStats();
+    toast(`Service area saved: ${a.radiusKm} km around the centre. All apps use it now.`);
+  } catch (e) { toast("Could not save. Check your internet and try again."); }
+});
+
+// ---------------- complaints ----------------
+function renderComplaints() {
+  const n = (k) => complaints.filter((c) => k === "all" || c.status === k).length;
+  $("cfilter").innerHTML = [["open", "Open"], ["resolved", "Resolved"], ["all", "All"]].map(([k, l]) => `<button class="chip ${cfilter === k ? "on" : ""}" data-f="${k}">${l} ${n(k)}</button>`).join("");
+  const list = complaints.filter((c) => cfilter === "all" || c.status === cfilter).slice().reverse();
+  $("cTbl").innerHTML = table(["Customer", "Issue", "Order", "Rider", "Received", "Status", ""],
+    list.map((c) => `<tr><td><b>${esc(c.name)}</b><div class="muted xs-t">${esc(c.phone)}</div></td><td style="min-width:240px;white-space:normal">${esc(c.text)}</td>
+      <td>${c.orderId ? `<a href="#" data-open="${esc(c.orderId)}">${esc(c.orderShort || "View")}</a>` : "General"}</td><td>${esc(c.rider || "-")}</td><td>${fmtDate(c.createdAt)}</td><td>${pill(c.status, c.status === "open" ? "Open" : "Resolved")}</td>
+      <td style="white-space:nowrap"><a class="btn sec sm" href="tel:${esc(c.phone)}" aria-label="Call">${icon("phone", 15)}</a> <a class="btn sec sm" href="${esc(wa(c.phone))}" target="_blank" rel="noopener" aria-label="WhatsApp">${icon("message", 15)}</a>
+        <button class="btn sm ${c.status === "open" ? "" : "sec"}" data-c="${esc(c.id)}" data-s="${c.status === "open" ? "resolved" : "open"}">${c.status === "open" ? "Mark resolved" : "Reopen"}</button></td></tr>`), "No complaints here.");
+}
+$("cfilter").addEventListener("click", (e) => { const b = e.target.closest("[data-f]"); if (b) { cfilter = b.dataset.f; renderComplaints(); } });
+$("cTbl").addEventListener("click", async (e) => { const b = e.target.closest("button[data-c]"); if (b) { await update("complaints", b.dataset.c, { status: b.dataset.s }); toast(b.dataset.s === "resolved" ? "Marked as resolved." : "Complaint reopened."); } });
+
+// ---------------- reports ----------------
+const reportRows = () => { const v = $("range").value; const since = v === "today" ? startOfToday() : v === "all" ? 0 : Date.now() - Number(v) * 864e5; return orders.filter((o) => o.createdAt >= since); };
+function renderReports() {
+  const all = reportRows(), del = all.filter((o) => o.status === "delivered"), rated = del.filter((o) => o.rating);
+  $("rkpis").innerHTML = [["Total orders", all.length], ["Delivered", del.length], ["Failed", all.filter((o) => o.status === "failed").length], ["Cancelled", all.filter((o) => o.status === "cancelled").length],
+    ["Avg. delivery time", avg(del.map((o) => mins(o.createdAt, o.deliveredAt)).filter((x) => x != null)) + " min"], ["Delivery fees", rs(del.reduce((s, o) => s + num(o.fee), 0))],
+    ["Rider earnings", rs(del.length * S.riderShare)], ["Avg. rating", rated.length ? (rated.reduce((s, o) => s + o.rating, 0) / rated.length).toFixed(1) + " ★" : "-"]]
+    .map(([l, v]) => `<div class="kpi"><span>${l}</span><b>${v}</b></div>`).join("");
+  const by = {};
+  all.filter((o) => o.riderId).forEach((o) => { (by[o.rider || "Unknown"] ||= []).push(o); });
+  $("perfTbl").innerHTML = table(["Rider", "Delivered", "Failed", "Avg. rider time", "Rating", "Rider earnings", "Cash collected"],
+    Object.entries(by).map(([n, a]) => { const d = a.filter((o) => o.status === "delivered"), r = d.filter((o) => o.rating); return `<tr><td><b>${esc(n)}</b></td><td>${d.length}</td><td>${a.filter((o) => o.status === "failed").length}</td>
+      <td>${avg(d.map((o) => mins(o.acceptedAt, o.deliveredAt)).filter((x) => x != null))} min</td><td>${r.length ? (r.reduce((s, o) => s + o.rating, 0) / r.length).toFixed(1) + " ★" : "-"}</td>
+      <td>${rs(d.length * S.riderShare)}</td><td><b>${rs(d.reduce((s, o) => s + collected(o), 0))}</b></td></tr>`; }), "No rider activity in this period.");
+  $("histTbl").innerHTML = table(["Order", "Customer", "Area", "Rider", "Status", "Placed", "Delivered", "Rider time", "Total time", "Collected"],
+    all.slice().reverse().map((o) => `<tr class="click" data-open="${esc(o.id)}"><td><b>${esc(orderNo(o))}</b></td><td>${esc(o.name)}<div class="muted xs-t">${esc(o.phone)}</div></td><td>${esc(o.area || "-")}</td><td>${esc(o.rider || "-")}</td><td>${oPill(o)}</td>
+      <td>${fmtDate(o.createdAt)}</td><td>${o.deliveredAt ? fmtTime(o.deliveredAt) : "-"}</td><td>${mins(o.acceptedAt, o.deliveredAt) ?? "-"}</td><td>${mins(o.createdAt, o.deliveredAt) ?? "-"}</td><td>${collected(o) ? rs(collected(o)) : "-"}</td></tr>`), "No orders in this period.");
+}
+$("range").addEventListener("change", renderReports);
+$("csv").addEventListener("click", () => {
+  const rows = [["Order", "Customer", "Phone", "Area", "Address", "IP", "Device", "Rider", "Status", "Placed", "Assigned", "Picked up", "Delivered", "Rider minutes", "Total minutes", "Delivery fee", "Shop bill", "Collected", "Rating", "Fail reason"]];
+  const d = (x) => (x ? new Date(x).toLocaleString("en-GB") : "");
+  reportRows().forEach((o) => rows.push([orderNo(o), o.name, o.phone, o.area, o.address, o.ip, o.device, o.rider, STATUS[o.status] || o.status, d(o.createdAt), d(o.acceptedAt), d(o.pickedAt), d(o.deliveredAt), mins(o.acceptedAt, o.deliveredAt) ?? "", mins(o.createdAt, o.deliveredAt) ?? "", o.fee, o.bill || "", collected(o) || "", o.rating || "", o.failReason || ""]));
+  const csv = rows.map((r) => r.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv" }));
+  a.download = "km-express-report.csv";
+  a.click();
+  toast("Report downloaded.");
+});
+
+// ---------------- settings ----------------
+const NUMS = ["deliveryFee", "riderShare", "cashLimit", "maxActivePerCustomer", "maxActivePerRider", "openFrom", "openTo", "radiusKm", "speedKmh", "kycHours"];
+const TEXTS = ["appName", "supportPhone", "supportWhatsapp"];
+function renderSettings() {
+  initAreaEditor();
+  if ($("sform").contains(document.activeElement) || areaDirty) { paintAreaStats(); return; }
+  NUMS.forEach((k) => ($("s_" + k).value = S[k]));
+  $("s_radiusRange").value = String(S.radiusKm);
+  TEXTS.forEach((k) => ($("s_" + k).value = S[k]));
+  $("s_accepting").checked = !!S.accepting;
+  $("s_lat").value = S.center.lat; $("s_lng").value = S.center.lng;
+  $("s_areas").value = S.areas.join("\n");
+  $("s_kycMode").value = S.kycMode || "wait";
+  paintAreaMap(); paintAreaStats();
+}
+$("useHere").addEventListener("click", async () => {
+  try { const p = await getPos(); moveCentre(p); paintAreaMap(true); toast(`Centre moved to where you are now (±${p.acc} m). Press "Save service area" to keep it.`); }
+  catch { toast("Could not get your location. Allow location for this page and try again."); }
+});
+$("sform").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const err = (m) => { $("serr").textContent = m; };
+  err("");
+  const patch = {};
+  for (const k of NUMS) { const v = Number($("s_" + k).value); if (!Number.isFinite(v) || v < 0) return err(`Check the value for ${k}.`); patch[k] = v; }
+  if (patch.openFrom > 23 || patch.openTo > 24) return err("Hours must be between 0 and 24.");
+  if (patch.radiusKm < 0.5 || patch.radiusKm > 50) return err("Radius should be between 0.5 and 50 km.");
+  if (patch.riderShare > patch.deliveryFee) return err("Rider earning cannot be more than the delivery fee.");
+  if (patch.kycHours < 1 || patch.kycHours > 72) return err("KYC check time should be between 1 and 72 hours.");
+  patch.kycMode = $("s_kycMode").value;
+  patch.radiusSet = true;
+  TEXTS.forEach((k) => (patch[k] = $("s_" + k).value.trim()));
+  patch.accepting = $("s_accepting").checked;
+  const lat = Number($("s_lat").value), lng = Number($("s_lng").value);
+  if (!(lat > 20 && lat < 40 && lng > 60 && lng < 80)) return err("Centre coordinates look wrong.");
+  patch.center = { lat, lng };
+  patch.areas = $("s_areas").value.split("\n").map((x) => x.trim()).filter(Boolean);
+  const p1 = $("s_pin1").value.trim(), p2 = $("s_pin2").value.trim();
+  if (p1 || p2) {
+    if (!/^\d{6,8}$/.test(p1)) return err("The new admin PIN must be 6 to 8 digits.");
+    if (p1 !== p2) return err("The two PINs do not match.");
+    patch.adminPinHash = adminHash(p1);
+  }
+  await saveSettings(patch);
+  areaDirty = false;
+  $("s_pin1").value = ""; $("s_pin2").value = "";
+  document.activeElement?.blur();
+  toast(p1 ? "Settings and admin PIN saved." : "Settings saved.");
+});
+
+// ---------------- awaz aur desktop alerts ----------------
+let alarmOn = true;
+try { alarmOn = localStorage.getItem("kmd_alarm") !== "0"; } catch (e) {}
+const ding = () => { if (alarmOn) beep(); };
+function paintAlarm() { $("alarmBtn").innerHTML = icon("bell", 16) + (alarmOn ? " Sound alerts on" : " Sound alerts off"); $("alarmBtn").style.opacity = alarmOn ? "1" : ".6"; }
+$("alarmBtn").addEventListener("click", async () => {
+  alarmOn = !alarmOn;
+  try { localStorage.setItem("kmd_alarm", alarmOn ? "1" : "0"); } catch (e) {}
+  if (alarmOn) { beep(); try { if (window.Notification && Notification.permission === "default") await Notification.requestPermission(); } catch (e) {} }
+  paintAlarm();
+});
+paintAlarm();
+// Laptop par tab chhupa ho to bhi pata chale (Chrome ki notification)
+function notify(title, body) {
+  try { if (alarmOn && document.hidden && window.Notification && Notification.permission === "granted") new Notification(title, { body, icon: "icon-192.png", tag: title }); } catch (e) {}
+}
+// Order 3 minute se zyada rider ke baghair pada ho to har minute awaz
+setInterval(() => {
+  if (!started || !alarmOn) return;
+  const late = orders.filter((o) => o.status === "new" && Date.now() - o.createdAt > 3 * 60000);
+  if (late.length) { beep(); notify("Order waiting for a rider", `${late.length} order${late.length > 1 ? "s are" : " is"} waiting for more than 3 minutes.`); }
+}, 60000);
+
+// ---------------- start / sign in ----------------
+function rerender() { renderNav(); renderView(); refreshDrawer(); refreshKyc(); }
+function start() {
+  if (started) return;
+  started = true;
+  $("login").hidden = true; $("shell").hidden = false;
+  go("overview");
+  watch("orders", (list) => {
+    orders = list;
+    const n = list.filter((o) => o.status === "new").length;
+    if (!firstSnap && n > lastNew) { ding(); toast("New order received"); notify("New order", "A new order is waiting for a rider."); }
+    firstSnap = false; lastNew = n;
+    rerender();
+  });
+  watch("riders", (l) => { riders = l; rerender(); });
+  watch("complaints", (l) => { complaints = l; rerender(); });
+  watch("settlements", (l) => { settles = l; rerender(); });
+  watch("blocks", (l) => { blocks = l; rerender(); });
+  watch("visits", (l) => { visits = l; if (view === "security") renderSecurity(); if (view === "settings") paintAreaStats(); }, null, { by: "ts", limit: 300 });
+  watch("kyc", (l) => {
+    kycs = l;
+    const n = l.filter((k) => k.status === "pending").length;
+    if (!firstKyc && n > lastKycPending) { ding(); toast("New KYC to review"); notify("New KYC", "A new customer sent their CNIC for review."); }
+    firstKyc = false; lastKycPending = n;
+    rerender(); decryptInfos();
+  });
+  watch("alerts", (l) => {
+    alerts = l;
+    const n = l.filter((a) => !a.seen).length;
+    if (!firstAlerts && n > lastAlertCount) { ding(); setTimeout(ding, 450); toast("SECURITY ALERT: " + alertTitle(l[l.length - 1])); notify("Security alert", alertTitle(l[l.length - 1])); }
+    firstAlerts = false; lastAlertCount = n;
+    rerender();
+  });
+}
+watchSettings((s) => {
+  S = s;
+  $("brandName").textContent = s.appName; $("brandName2").textContent = s.appName;
+  if (started) rerender();
+});
+let tries = 0, lockUntil = 0;
+$("loginForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const err = $("loginErr");
+  if (!S) { err.textContent = "Loading, please try again."; return; }
+  if (Date.now() < lockUntil) { err.textContent = `Too many attempts. Try again in ${Math.ceil((lockUntil - Date.now()) / 1000)} seconds.`; return; }
+  if (adminHash($("pin").value) === S.adminPinHash) { ss.setItem("kmd_admin", S.adminPinHash.slice(0, 16)); err.textContent = ""; start(); return; }
+  tries++;
+  $("pin").value = "";
+  if (tries >= 5) { lockUntil = Date.now() + 60000; tries = 0; err.textContent = "Too many attempts. Please wait 1 minute."; }
+  else err.textContent = "Incorrect PIN.";
+});
+$("logout").addEventListener("click", () => { ss.removeItem("kmd_admin"); location.reload(); });
+$("verTxt").textContent = "Version " + (APP_VERSION.indexOf("__") === 0 ? "dev" : APP_VERSION);
+// Session tabhi valid hai jab PIN badla na ho
+const sess = ss.getItem("kmd_admin");
+if (sess && S && sess === S.adminPinHash.slice(0, 16)) start();
+if ("serviceWorker" in navigator && location.protocol.startsWith("http") && !inApp()) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>

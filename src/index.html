@@ -1,0 +1,981 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B7A4B">
+<title>Kot Momin Express</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="KM Express">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Sora:wght@600;700&family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<!-- LOCATION GATE: app location ke baghair nahi chalti -->
+<div id="gate" class="gate">
+  <button class="langbtn" id="gLang" type="button" data-t="lang_btn"></button>
+  <div class="ring" data-icon="pin" data-size="42"></div>
+  <h1 id="gTitle"></h1>
+  <p id="gText"></p>
+  <div id="gMap" class="map gmap" hidden></div>
+  <div class="msg" id="gMsg" role="status" hidden></div>
+  <button class="btn" id="gBtn" type="button"></button>
+  <button class="btn ghostw" id="gDemo" type="button" hidden data-t="gate_demo"></button>
+  <div class="note" data-t="gate_note"></div>
+</div>
+
+<!-- KYC: shuru mein aik dafa shanakhti card se tasdeeq (admin 24 ghante mein check karta hai) -->
+<div id="kyc" class="kycwrap" hidden>
+  <header class="appbar">
+    <div class="brand"><span class="logo" data-icon="truck" data-size="20"></span><div><b id="kBrand"></b><small data-t="brand_tag"></small></div></div>
+    <button class="langbtn" id="kLang" type="button" data-t="lang_btn"></button>
+  </header>
+  <main class="content">
+    <div class="kychero">
+      <div class="kring" data-icon="idcard" data-size="30"></div>
+      <div><h1 data-t="kyc_title"></h1><p id="kIntro"></p></div>
+    </div>
+    <div class="banner red" id="kRej" hidden></div>
+    <form id="kform" class="card form" novalidate autocomplete="off">
+      <div class="field"><label for="kName" data-t="kyc_name"></label><input id="kName" autocomplete="name" required></div>
+      <div class="field"><label for="kCnic" data-t="kyc_cnic"></label><input id="kCnic" inputmode="numeric" placeholder="12345-1234567-1" maxlength="15" dir="ltr" required></div>
+      <div class="field"><label for="kPhone" data-t="kyc_phone"></label><input id="kPhone" type="tel" inputmode="tel" placeholder="03xx xxxxxxx" autocomplete="tel" dir="ltr" required><div class="hint" data-t="kyc_phone_hint"></div></div>
+      <div class="field"><label for="kArea" data-t="kyc_home"></label><select id="kArea"></select><input id="kAddress" data-tp="f_address_ph" aria-label="Address" style="margin-top:8px"></div>
+      <div class="sec-title" data-t="kyc_photos"></div>
+      <div class="kphotos" id="kPhotos"></div>
+      <label class="kagree"><input type="checkbox" id="kAgree"><span data-t="kyc_consent"></span></label>
+      <div class="hint" style="display:flex;gap:8px"><span data-icon="lock" data-size="15"></span><span data-t="kyc_secure"></span></div>
+      <div class="err" id="kErr" role="alert"></div>
+      <button class="btn block" id="kSend" type="submit" data-t="kyc_submit"></button>
+      <a class="btn ghost block" id="kHelp"><span data-icon="phone" data-size="15"></span><span data-t="kyc_help"></span></a>
+    </form>
+  </main>
+</div>
+
+<div class="app" id="app" hidden>
+  <header class="appbar">
+    <div class="brand"><span class="logo" data-icon="truck" data-size="20"></span><div><b id="brandName"></b><small data-t="brand_tag"></small></div></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button id="installBtn" class="btn sm soft" type="button" hidden><span data-t="install"></span></button>
+      <button class="langbtn" id="lang" type="button" data-t="lang_btn"></button>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="demo-banner" id="demo" hidden data-t="demo_banner"></div>
+
+    <!-- HOME -->
+    <section id="v-home" class="stack">
+      <div class="greet"><h1 id="hello"></h1><p data-t="home_q"></p></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="locchip"><span data-icon="pin" data-size="14"></span><span data-t="loc_chip"></span></span><span id="kycChip"></span><span id="trustHome"></span></div>
+      <div id="closedBox"></div>
+      <div id="kycBox"></div>
+      <div class="cats" id="cats"></div>
+      <button class="wide" id="parcelBtn" type="button">
+        <span class="ci c6" data-icon="package" data-size="22"></span>
+        <span class="grow"><b data-t="cat_parcel"></b><small data-t="parcel_sub"></small></span>
+        <span class="flip" data-icon="chev"></span>
+      </button>
+      <div id="againWrap" class="stack" hidden><div class="sec-title" data-t="again_title"></div><div class="hscroll" id="again"></div></div>
+      <div class="stack">
+        <div class="sec-title" data-t="how_title"></div>
+        <div class="how"><div><b>1</b><span data-t="how1"></span></div><div><b>2</b><span data-t="how2"></span></div><div><b>3</b><span data-t="how3"></span></div></div>
+        <div class="hint" id="feeNote"></div>
+      </div>
+      <div class="card areacard stack">
+        <div class="row"><b data-t="area_title"></b><span class="flag green" id="areaKm"></span></div>
+        <div id="amap" class="map amap"></div>
+        <div class="hint" id="areaTxt"></div>
+      </div>
+    </section>
+
+    <!-- NEW ORDER -->
+    <section id="v-new" class="stack" hidden>
+      <div class="pagehead"><button class="iconbtn flip" id="newBack" type="button" data-icon="back" aria-label="Back"></button><h2 id="newTitle"></h2></div>
+      <form id="form" class="card form" novalidate>
+        <div class="field"><label for="items" id="itemsLabel"></label><textarea id="items"></textarea></div>
+        <div class="field" id="chipsBox"><label data-t="quick_title"></label><div class="chipsq" id="chips"></div></div>
+        <div class="attach">
+          <button type="button" class="attbtn" id="voiceBtn"><span data-icon="mic" data-size="17"></span><span id="voiceTxt"></span></button>
+          <label class="attbtn" id="photoBtn"><span data-icon="camera" data-size="17"></span><span id="photoTxt"></span><input type="file" accept="image/*" id="photoIn"></label>
+        </div>
+        <div class="hint" data-t="f_voice_hint"></div>
+        <div id="attPrev" class="stack"></div>
+        <div class="field" id="shopBox"><label for="shop"><span data-t="f_shop"></span> <span class="opt" data-t="optional"></span></label><input id="shop" data-tp="f_shop_ph"></div>
+        <div class="field" id="pickupBox" hidden><label for="pickup" data-t="f_pickup"></label><input id="pickup" data-tp="f_pickup_ph"></div>
+        <div class="field" id="estBox"><label for="estimate" data-t="f_est"></label><input id="estimate" inputmode="numeric" placeholder="0"><div class="hint" data-t="f_est_hint"></div></div>
+        <div class="field"><label for="area" data-t="f_area"></label><select id="area" required></select></div>
+        <div class="field"><label for="address" data-t="f_address"></label><input id="address" required data-tp="f_address_ph"></div>
+        <div class="row" style="align-items:flex-start">
+          <div class="hint ok" id="gpsLine" style="display:flex;gap:6px;align-items:center"></div>
+          <button type="button" class="btn sec sm" id="adjBtn"><span data-icon="pin" data-size="15"></span><span data-t="f_adjust"></span></button>
+        </div>
+        <div id="pickmap" class="map" hidden></div>
+        <div class="hint" id="pinHint" hidden data-t="f_pin_hint"></div>
+        <div class="two">
+          <div class="field"><label for="name" data-t="f_name"></label><input id="name" required autocomplete="name"></div>
+          <div class="field"><label for="phone" data-t="f_phone"></label><input id="phone" type="tel" inputmode="tel" required placeholder="03xx xxxxxxx" autocomplete="tel"></div>
+        </div>
+        <div class="hint ok" id="phoneLock" hidden style="display:flex;gap:6px;align-items:center"><span data-icon="idcard" data-size="15"></span><span data-t="kyc_phone_locked"></span></div>
+        <div class="field"><label for="note"><span data-t="f_note"></span> <span class="opt" data-t="optional"></span></label><input id="note" data-tp="f_note_ph"></div>
+        <div class="summary">
+          <div class="row"><span data-t="sum_fee"></span><b id="sFee"></b></div>
+          <div class="row" id="sItemsRow"><span data-t="sum_items"></span><span id="sItems"></span></div>
+          <div class="row total"><span data-t="sum_total"></span><span id="sTotal"></span></div>
+          <div class="row"><span data-t="sum_pay"></span><span data-t="cash"></span></div>
+        </div>
+        <div class="hint" style="display:flex;gap:8px"><span data-icon="lock" data-size="15"></span><span data-t="code_info"></span></div>
+        <div class="err" id="formErr" role="alert"></div>
+        <button class="btn block" id="send" type="submit" data-t="place"></button>
+      </form>
+    </section>
+
+    <!-- ORDERS -->
+    <section id="v-orders" class="stack" hidden>
+      <div class="pagehead"><h2 data-t="orders_title"></h2></div>
+      <div id="olist" class="stack"></div>
+      <div class="empty" id="none" hidden>
+        <div class="ei" data-icon="package" data-size="26"></div>
+        <h3 data-t="none_title"></h3><p class="sm-t" data-t="none_text"></p>
+        <button class="btn" id="startBtn" type="button" style="margin-top:14px" data-t="start_order"></button>
+      </div>
+    </section>
+
+    <!-- TRACK ONE ORDER -->
+    <section id="v-track" class="stack" hidden>
+      <div class="pagehead">
+        <button class="iconbtn flip" id="trBack" type="button" data-icon="back" aria-label="Back"></button>
+        <div style="flex:1;min-width:0"><h2 id="trNo" class="ono"></h2><div class="muted xs-t" id="trAgo"></div></div>
+        <span id="trPill"></span>
+      </div>
+      <div class="card ocard">
+        <div class="etabox" id="trEta"><div class="etamin" id="trBig"></div><div class="etasub" id="trSub"></div></div>
+        <div class="steps" id="trSteps"></div>
+        <div id="tmap" class="map tmap" hidden></div>
+      </div>
+      <div class="arrive" id="trArrive" hidden><div class="ei" data-icon="bell" data-size="22"></div><div><b data-t="arrived_title"></b><small data-t="arrived_sub"></small></div></div>
+      <div class="codebox" id="trCode" hidden>
+        <div><div class="lb" data-t="code_title"></div><small data-t="code_text"></small></div>
+        <div class="code" id="trCodeVal"></div>
+      </div>
+      <div class="billbox card" id="trBill" hidden></div>
+      <div class="paybox" id="trPay" hidden></div>
+      <div class="rcard card" id="trRider" hidden>
+        <div class="av" id="trAv"></div>
+        <div class="grow"><div class="nm" id="trRname"></div><div class="sub" data-t="your_rider"></div></div>
+        <a class="iconbtn" id="trCall" aria-label="Call"></a>
+        <button type="button" class="iconbtn" id="trChat" aria-label="Chat"></button>
+      </div>
+      <div class="card"><dl class="meta" id="trMeta"></dl></div>
+      <div class="card stack" id="trRate" hidden>
+        <b style="text-align:center" data-t="rate_title"></b>
+        <div class="stars" id="stars"></div>
+        <button class="btn block" id="rateBtn" type="button" disabled data-t="rate_send"></button>
+      </div>
+      <div class="oactions">
+        <button type="button" class="btn soft sm" id="trReorder" hidden><span data-t="reorder"></span></button>
+        <button type="button" class="btn sec sm" id="trReport"><span data-icon="alert" data-size="15"></span><span data-t="report"></span></button>
+        <button type="button" class="btn danger sm" id="trCancel" hidden><span data-t="cancel_order"></span></button>
+      </div>
+    </section>
+
+    <!-- ACCOUNT -->
+    <section id="v-account" class="stack" hidden>
+      <div class="card trustcard" id="kycCard" hidden></div>
+      <div class="card trustcard" id="trustCard"></div>
+      <form id="pform" class="card form">
+        <b data-t="acc_profile"></b>
+        <div class="two">
+          <div class="field"><label for="pname" data-t="f_name"></label><input id="pname"></div>
+          <div class="field"><label for="pphone" data-t="f_phone"></label><input id="pphone" type="tel" inputmode="tel"></div>
+        </div>
+        <div class="field"><label for="parea" data-t="f_area"></label><select id="parea"></select></div>
+        <div class="field"><label for="paddress" data-t="f_address"></label><input id="paddress"></div>
+        <button class="btn sec" type="submit" data-t="save"></button>
+      </form>
+      <div class="card row"><b data-t="acc_lang"></b><div class="seg" style="min-width:180px"><button type="button" data-l="en">English</button><button type="button" data-l="ur">اردو</button></div></div>
+      <div class="card stack">
+        <div><b data-t="help_title"></b><div class="muted sm-t" id="hoursTxt"></div></div>
+        <div class="locrow"><a id="supCall" class="btn soft sm"><span data-icon="phone" data-size="15"></span><span data-t="call_support"></span></a><a id="supWa" class="btn soft sm" target="_blank" rel="noopener"><span data-icon="message" data-size="15"></span><span data-t="whatsapp"></span></a></div>
+      </div>
+      <form id="cform" class="card form">
+        <div><b data-t="cmp_title"></b><div class="muted sm-t" data-t="cmp_text"></div></div>
+        <div class="field"><label for="corder" data-t="cmp_order"></label><select id="corder"></select></div>
+        <div class="field"><label for="ctext" data-t="cmp_what"></label><textarea id="ctext" required></textarea></div>
+        <button class="btn block" type="submit" data-t="cmp_send"></button>
+      </form>
+      <div class="card" id="instCard"><b data-t="install"></b><p class="installhint" style="margin-top:4px" data-t="install_hint"></p></div>
+      <div class="card"><b data-t="privacy_title"></b><p class="muted sm-t" style="margin-top:4px" data-t="privacy_text"></p><a class="sm-t" href="../privacy.html" style="display:inline-block;margin-top:6px;font-weight:800" data-t="privacy_more"></a></div>
+      <p class="muted xs-t" style="text-align:center" id="verTxt"></p>
+    </section>
+  </main>
+
+  <nav class="tabbar" id="tabs" aria-label="Main">
+    <button class="tab on" data-v="home" type="button" data-icon="home" data-size="22"><span data-t="tab_home"></span></button>
+    <button class="tab" data-v="orders" type="button" data-icon="package" data-size="22"><span data-t="tab_orders"></span><span class="bd" id="badge" hidden>0</span></button>
+    <button class="tab" data-v="account" type="button" data-icon="user" data-size="22"><span data-t="tab_account"></span></button>
+  </nav>
+</div>
+
+<script type="module">
+import { add, update, setOne, getOne, watchOne, watchSettings, getWhere, cloud, kv, ss, ACTIVE, putMedia, mediaSrc, hydrateMedia } from "./db.js";
+import { esc, icon, hydrateIcons, eta, mins, orderNo, rs, num, fmtTime, fmtDate, getPos, createMap, toast, beep, onInstallable, promptInstall, initials, inArea, distKm, isOpen, hourLabel, validPhone, norm, deviceId, uaShort, getIp, otpHash, startRecording, compressImage, fitImage, trustOf, inApp, APP_VERSION, pushBack } from "./util.js";
+import { t, initLang, setLang, getLang, applyLang, agoT } from "./i18n.js";
+import { openChat } from "./chat.js";
+import { askYes, askText, info } from "./dialog.js";
+import { kycCryptoOk, sealKyc, cnicKey, cnicMask, cnicFormat, validCnic } from "./kyc.js";
+
+const $ = (id) => document.getElementById(id);
+initLang("customer");
+hydrateIcons();
+if (!cloud) { $("demo").hidden = false; $("gDemo").hidden = false; }
+onInstallable(() => ($("installBtn").hidden = false));
+try { if (inApp() || window.matchMedia("(display-mode: standalone)").matches || navigator.standalone) $("instCard").hidden = true; } catch (e) {}
+$("installBtn").addEventListener("click", () => promptInstall());
+
+const CATS = { grocery: ["cart", "c1"], fruit: ["fruit", "c7"], snack: ["snack", "c8"], food: ["food", "c3"], bakery: ["cake", "c4"], pharmacy: ["pill", "c2"], mobile: ["mobile", "c5"], other: ["package", "c6"], parcel: ["package", "c6"] };
+const HOME_CATS = ["grocery", "fruit", "snack", "food", "bakery", "pharmacy", "mobile", "other"];
+const catBadge = (k, s = 22) => { const [ic, c] = CATS[k] || CATS.other; return `<span class="ci ${c}">${icon(ic, s)}</span>`; };
+const dev = deviceId(kv);
+const J = (k, d) => { try { return JSON.parse(kv.getItem(k) || "") ?? d; } catch { return d; } };
+const profile = () => J("kmd_profile", {});
+const myIds = () => J("kmd_my", []);
+const myCodes = () => J("kmd_otp", {});
+const kycLocal = () => J("kmd_mykyc", null);
+
+let S = null, here = null, gateMode = "ask", gateKm = "", view = "home", cat = "grocery", dest = null, curTrack = null, rating = 0;
+let voice = null, photo = null, recording = null, trust = null;
+let kycDoc, kycUnsub = null, kycPh = {}; // kycDoc: undefined = abhi load ho raha, null = nahi mila
+const orders = new Map();
+const lastStatus = new Map();
+const H = 3600000;
+
+// ---------------- KYC ki halat ----------------
+// off = KYC band (ya admin ne KYC password abhi nahi banaya), none = abhi tak nahi bheji, loading, pending, approved, rejected
+const kycActive = () => !!S && S.kycMode !== "off" && !!S.kycPublicKey && kycCryptoOk();
+function kycState() {
+  if (!kycActive()) return "off";
+  const l = kycLocal();
+  if (!l) return "none";
+  if (l.ref !== kycWatchRef) watchKyc(); // kisi aur tab/naye data se ref badal gaya
+  if (kycDoc === undefined) return "loading";
+  if (!kycDoc) return "none";
+  return kycDoc.status || "pending";
+}
+const kycDue = () => (kycDoc && (kycDoc.dueAt || kycDoc.createdAt + (S.kycHours || 24) * H)) || Date.now() + (S.kycHours || 24) * H;
+const kycTime = () => "⁦" + fmtDate(kycDue()) + "⁩";
+let kycWatchRef = "";
+function watchKyc() {
+  if (kycUnsub) { kycUnsub(); kycUnsub = null; }
+  const l = kycLocal();
+  kycWatchRef = l ? l.ref : "";
+  kycDoc = l ? undefined : null;
+  if (!l) return;
+  let first = true;
+  kycUnsub = watchOne("kyc", l.ref, (d) => {
+    const prev = kycDoc ? kycDoc.status : null;
+    kycDoc = d;
+    if (!first && d && prev && prev !== d.status) { beep(); toast(t(d.status === "approved" ? "kyc_ok_toast" : d.status === "rejected" ? "kyc_rej_toast" : "kyc_pending_t")); }
+    first = false;
+    renderAll();
+  });
+}
+
+// ---------------- security: har dafa app khulne ka record (location, IP, device) ----------------
+// Fraud mark kiye gaye number/device/IP se app khule to admin ko foran alert jata hai.
+async function logVisit(p) {
+  try {
+    const last = Number(ss.getItem("kmd_visit_ts") || 0);
+    if (Date.now() - last < 20 * 60000) return;
+    ss.setItem("kmd_visit_ts", String(Date.now()));
+    const pr = profile(), ip = await getIp();
+    const v = { device: dev, phone: pr.phone || "", name: pr.name || "", ip, lat: p ? p.lat : null, lng: p ? p.lng : null, acc: p ? p.acc : null, ua: uaShort(), ts: Date.now() };
+    await add("visits", v);
+    await fraudCheck(v, "fraud_seen");
+  } catch (e) { console.warn(e); }
+}
+async function fraudCheck(v, type) {
+  const lists = await Promise.all([getWhere("blocks", "value", v.device), v.phone ? getWhere("blocks", "value", v.phone) : [], v.ip ? getWhere("blocks", "value", v.ip) : []]);
+  const hit = [].concat(lists[0], lists[1], lists[2]).find((b) => b.kind === "fraud");
+  if (hit) await add("alerts", { type, match: hit.type, ...v, reason: hit.reason || "", seen: false, ts: Date.now() });
+  return hit;
+}
+
+// ---------------- location gate ----------------
+let gmapP = null;
+function paintGate() {
+  const m = $("gMsg");
+  $("gTitle").textContent = t(gateMode === "outside" ? "gate_out_title" : "gate_title");
+  $("gText").textContent = gateMode === "outside" ? t("gate_out_text", { km: gateKm, r: S ? S.radiusKm : 5.5 }) : t("gate_text");
+  m.hidden = !(gateMode === "wait" || gateMode === "denied");
+  m.textContent = gateMode === "wait" ? t("gate_wait") : t("gate_denied");
+  $("gBtn").textContent = t(gateMode === "ask" ? "gate_btn" : "gate_retry");
+  $("gBtn").disabled = gateMode === "wait";
+  // Bahar wale customer ko map par dikhao ke woh daire se kitna door hai
+  const showMap = gateMode === "outside" && !!here && !!S && !$("gate").hidden;
+  $("gMap").hidden = !showMap;
+  if (showMap) {
+    if (!gmapP) gmapP = createMap($("gMap"), S, { still: true, centreLabel: t("area_centre") }).catch(() => null);
+    gmapP.then((mp) => { if (mp) { mp.setArea(S); mp.you(here, t("map_you"), true); } else $("gMap").hidden = true; });
+  }
+}
+function showGate(mode, km) {
+  gateMode = mode; gateKm = km || "";
+  $("gate").hidden = false; $("app").hidden = true; $("kyc").hidden = true;
+  paintGate();
+}
+async function locate() {
+  showGate("wait");
+  let p;
+  try { p = await getPos(); } catch { showGate("denied"); logVisit(null); return; }
+  onLocated(p);
+}
+function onLocated(p) {
+  here = p;
+  if (!S) return; // settings aate hi dobara
+  logVisit(p);
+  if (!inArea(p, S)) { showGate("outside", distKm(p, S.center).toFixed(1)); return; }
+  // Naya customer: pehle KYC (aik dafa), phir app
+  if (kycState() === "none") { showKyc(); return; }
+  enterApp();
+}
+function enterApp() {
+  if (kycBack) { const r = kycBack; kycBack = null; r(); }
+  $("gate").hidden = true; $("kyc").hidden = true; $("app").hidden = false;
+  show(view === "home" ? "home" : view, true);
+}
+$("gBtn").addEventListener("click", locate);
+$("gDemo").addEventListener("click", () => onLocated({ lat: S.center.lat + 0.004, lng: S.center.lng + 0.005, acc: 12 }));
+$("gLang").addEventListener("click", () => switchLang());
+$("lang").addEventListener("click", () => switchLang());
+$("kLang").addEventListener("click", () => switchLang());
+function switchLang(l) { setLang(l || (getLang() === "ur" ? "en" : "ur")); paintGate(); if (!$("kyc").hidden) showKyc(); renderAll(); }
+showGate("ask");
+
+// ---------------- KYC screen ----------------
+// [hissa, naam, icon, camera, zyada se zyada pixels, zyada se zyada size]
+const KP = [["front", "kyc_front", "idcard", "environment", 1000, 300000], ["back", "kyc_back", "idcard", "environment", 1000, 300000], ["selfie", "kyc_selfie", "user", "user", 640, 140000]];
+function paintKycPhotos() {
+  $("kPhotos").innerHTML = KP.map(([k, label, ic, cap]) => {
+    const ph = kycPh[k];
+    return `<div class="kslot ${ph ? "on" : ""}"><div class="kthumb">${ph ? `<img src="${esc(ph)}" alt="">` : icon(ic, 24)}</div>
+      <div class="grow"><b>${esc(t(label))}</b><small>${ph ? icon("check", 12) + " " + esc(t("kyc_added")) : esc(t("kyc_need"))}</small>
+        <div class="kbtns"><label class="btn sec sm">${icon("camera", 15)}<span>${esc(t("kyc_cam"))}</span><input type="file" accept="image/*" capture="${cap}" data-kp="${k}"></label>
+          <label class="btn ghost sm">${icon("image", 15)}<span>${esc(t("kyc_gal"))}</span><input type="file" accept="image/*" data-kp="${k}"></label></div></div></div>`;
+  }).join("");
+}
+let kycBack = null;
+function showKyc(other) {
+  if (!S) return;
+  const p = profile(), l = kycLocal();
+  if (viewBack) { const r = viewBack; viewBack = null; r(); }
+  view = "home";
+  // Pehli dafa (lazmi) KYC se "back" par app band; baad mein (dobara bhejna) back par wapas app
+  if (!kycBack && $("kyc").hidden && kycState() !== "none") kycBack = pushBack(() => { kycBack = null; enterApp(); });
+  $("gate").hidden = true; $("app").hidden = true; $("kyc").hidden = false;
+  $("kBrand").textContent = S.appName;
+  $("kIntro").textContent = t("kyc_intro", { h: S.kycHours || 24 });
+  const rej = kycDoc && kycDoc.status === "rejected";
+  $("kRej").hidden = !rej;
+  if (rej) $("kRej").innerHTML = `${icon("alert", 20)}<div><b>${esc(t("kyc_rejected_t"))}</b>${esc(t("kyc_rejected_s", { reason: kycDoc.reason || "-" }))}</div>`;
+  if (!$("kName").value) $("kName").value = (l && l.name) || p.name || "";
+  if (other) $("kPhone").value = "";
+  else if (!$("kPhone").value) $("kPhone").value = (l && l.phone) || p.phone || "";
+  fillAreas($("kArea"), $("kArea").value || p.area || "");
+  if (!$("kAddress").value) $("kAddress").value = p.address || "";
+  $("kHelp").href = "tel:" + S.supportPhone;
+  paintKycPhotos(); applyLang();
+  window.scrollTo({ top: 0 });
+}
+$("kCnic").addEventListener("input", (e) => { const v = cnicFormat(e.target.value); if (v !== e.target.value) e.target.value = v; });
+$("kPhotos").addEventListener("change", async (e) => {
+  const el = e.target, k = el.dataset.kp;
+  if (!k || !el.files || !el.files[0]) return;
+  const row = KP.find((x) => x[0] === k) || [];
+  try { kycPh[k] = await fitImage(el.files[0], row[4] || 1000, row[5] || 300000); } catch { toast(t("kyc_e_photo")); }
+  el.value = "";
+  paintKycPhotos();
+});
+$("kform").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const err = (k) => { $("kErr").textContent = t(k); return false; };
+  $("kErr").textContent = "";
+  const f = { name: $("kName").value.trim().replace(/\s+/g, " "), cnic: cnicFormat($("kCnic").value), phone: norm($("kPhone").value), area: $("kArea").value, address: $("kAddress").value.trim() };
+  if (f.name.length < 3) return err("kyc_e_name");
+  if (!validCnic(f.cnic)) return err("kyc_e_cnic");
+  if (!validPhone(f.phone)) return err("e_phone");
+  if (!f.area || !f.address) return err("kyc_e_addr");
+  if (!kycPh.front || !kycPh.back || !kycPh.selfie) return err("kyc_e_photos");
+  if (!$("kAgree").checked) return err("kyc_e_consent");
+  if (!kycActive()) { enterApp(); return; } // admin ne KYC band kar di
+  const btn = $("kSend");
+  btn.disabled = true; btn.textContent = t("kyc_sending");
+  try {
+    const ip = await getIp();
+    let stand = here;
+    try { stand = await getPos(6000); here = stand; } catch {}
+    // Fraud list: number, phone (device) ya CNIC pehle se block/fraud ho to KYC qabool nahi aur admin ko alert
+    const ckey = await cnicKey(f.cnic);
+    const lists = await Promise.all([getWhere("blocks", "value", f.phone), getWhere("blocks", "value", dev), getWhere("blocks", "value", ckey)]);
+    const hits = [].concat(lists[0], lists[1], lists[2]);
+    if (hits.length) {
+      const hit = hits.find((b) => b.kind === "fraud");
+      if (hit) add("alerts", { type: "fraud_kyc", match: hit.type, device: dev, phone: f.phone, name: f.name, ip, lat: stand ? stand.lat : null, lng: stand ? stand.lng : null, acc: stand ? stand.acc : null, ua: uaShort(), reason: hit.reason || "", seen: false, ts: Date.now() }).catch(() => {});
+      return err("kyc_e_blocked");
+    }
+    const area = f.area === "__other" ? "Other" : f.area;
+    // CNIC aur tasveerein yahin (phone par) lock hoti hain; sirf admin ka KYC password inhein khol sakta hai
+    const sealed = await sealKyc(S.kycPublicKey, { info: JSON.stringify({ cnic: f.cnic, fullName: f.name, area, address: f.address, cnicKey: ckey }), front: kycPh.front, back: kycPh.back, selfie: kycPh.selfie });
+    const now = Date.now(), ref = "K" + now.toString(36).toUpperCase() + Math.random().toString(36).slice(2, 6).toUpperCase();
+    for (const part of ["front", "back", "selfie"]) { const sp = sealed.parts[part]; await add("kycfiles", { ref, part, iv: sp.iv, data: sp.data, ...(sp.bin ? { bin: sp.bin } : {}), createdAt: now }); }
+    const prev = kycLocal();
+    await setOne("kyc", ref, { phone: f.phone, name: f.name, device: dev, ip, ua: uaShort(), loc: stand ? { lat: stand.lat, lng: stand.lng, acc: Math.round(stand.acc || 0) } : null,
+      status: "pending", createdAt: now, dueAt: now + (S.kycHours || 24) * H, encKey: sealed.encKey, info: sealed.parts.info, cnicMask: cnicMask(f.cnic), prevRef: prev ? prev.ref : "", v: 1 });
+    kv.setItem("kmd_mykyc", JSON.stringify({ ref, phone: f.phone, name: f.name, mask: cnicMask(f.cnic), at: now }));
+    kv.setItem("kmd_profile", JSON.stringify({ ...profile(), name: f.name, phone: f.phone, area, address: f.address }));
+    kycPh = {};
+    $("kform").reset();
+    watchKyc();
+    enterApp();
+    toast(t("kyc_sent", { h: S.kycHours || 24 }));
+    refreshTrust();
+  } catch (ex) {
+    console.error(ex);
+    err("kyc_e_net");
+  } finally {
+    btn.disabled = false; btn.textContent = t("kyc_submit");
+  }
+});
+// Order se pehle: KYC ki shart (admin ki setting ke mutabiq)
+function canOrderNow() {
+  const st = kycState();
+  if (st === "none" || st === "rejected") { showKyc(); return false; }
+  if (st === "pending" && S.kycMode !== "allow") { info(t("kyc_pending_t"), t("kyc_wait_order", { time: kycTime() })); return false; }
+  return true;
+}
+
+// ---------------- navigation ----------------
+// Phone ka "back" button: track -> orders -> home; baqi screens -> home; home par app band
+let viewBack = null;
+function onViewBack() {
+  viewBack = null;
+  if (view === "track") { show("orders", true); viewBack = pushBack(onViewBack); }
+  else show("home", true);
+}
+function show(v, fromBack) {
+  view = v;
+  for (const k of ["home", "new", "orders", "track", "account"]) $("v-" + k).hidden = k !== v;
+  const tab = v === "new" ? "home" : v === "track" ? "orders" : v;
+  document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("on", b.dataset.v === tab));
+  window.scrollTo({ top: 0 });
+  renderAll();
+  if (fromBack) return;
+  if (v === "home") { if (viewBack) { const r = viewBack; viewBack = null; r(); } }
+  else if (!viewBack) viewBack = pushBack(onViewBack);
+}
+$("tabs").addEventListener("click", (e) => { const b = e.target.closest(".tab"); if (b) show(b.dataset.v); });
+$("newBack").addEventListener("click", () => show("home"));
+$("trBack").addEventListener("click", () => show("orders"));
+$("startBtn").addEventListener("click", () => show("home"));
+
+function renderAll() {
+  if (!S) return;
+  applyLang();
+  renderHome(); renderList(); renderAccount(); renderBadge();
+  if (view === "track") paintTrack();
+  if (view === "new") paintNewTexts();
+}
+
+// ---------------- home ----------------
+function renderHome() {
+  const p = profile();
+  $("hello").textContent = p.name ? t("hello", { name: p.name.split(" ")[0] }) : t("hello_anon");
+  const closed = !S.accepting ? `<div class="banner">${icon("clock", 20)}<div><b>${esc(t("closed_title"))}</b>${esc(t("paused_text"))}</div></div>`
+    : !isOpen(S) ? `<div class="banner">${icon("clock", 20)}<div><b>${esc(t("closed_title"))}</b>${esc(t("closed_text", { from: hourLabel(S.openFrom), to: hourLabel(S.openTo) }))}</div></div>` : "";
+  $("closedBox").innerHTML = closed;
+  const tr = trust && trust.delivered ? `<span class="locchip" style="background:var(--amber-soft);color:var(--amber)">${icon("award", 14)}${esc(t("trust_" + trust.level))} · ${trust.delivered}</span>` : "";
+  $("trustHome").innerHTML = tr;
+  // KYC ki halat
+  const st = kycState();
+  $("kycChip").innerHTML = st === "approved" ? `<span class="locchip">${icon("idcard", 14)}${esc(t("kyc_verified"))}</span>` : "";
+  $("kycBox").innerHTML = st === "pending" ? `<div class="banner">${icon("clock", 20)}<div class="grow"><b>${esc(t("kyc_pending_t"))}</b>${esc(t(S.kycMode === "allow" ? "kyc_pending_allow" : "kyc_pending_s", { time: kycTime() }))}</div></div>`
+    : st === "rejected" ? `<div class="banner red">${icon("alert", 20)}<div class="grow"><b>${esc(t("kyc_rejected_t"))}</b>${esc(t("kyc_rejected_s", { reason: (kycDoc && kycDoc.reason) || "-" }))}<div style="margin-top:8px"><button class="btn sm" type="button" data-kyc="1">${esc(t("kyc_again"))}</button></div></div></div>`
+    : st === "none" ? `<div class="banner">${icon("idcard", 20)}<div class="grow"><b>${esc(t("kyc_none_t"))}</b>${esc(t("kyc_none_s"))}<div style="margin-top:8px"><button class="btn sm" type="button" data-kyc="1">${esc(t("kyc_start"))}</button></div></div></div>` : "";
+  // Service area: hamara apna map (5.5 km gol daira)
+  $("areaKm").textContent = S.radiusKm + " km";
+  $("areaTxt").textContent = here ? t("area_in", { km: distKm(here, S.center).toFixed(1), r: S.radiusKm }) : "";
+  if (!$("app").hidden && view === "home") {
+    if (!amapP) amapP = createMap($("amap"), S, { still: true, centreLabel: t("area_centre") }).catch(() => null);
+    amapP.then((m) => { if (m) { m.setArea(S); m.you(here, t("map_you"), true); } else $("amap").hidden = true; });
+  }
+  $("cats").innerHTML = HOME_CATS.map((k) => `<button class="cat" type="button" data-cat="${k}">${catBadge(k)}<span>${esc(t("cat_" + k))}</span></button>`).join("");
+  const again = [...orders.values()].filter((o) => o.status === "delivered").sort((a, b) => b.createdAt - a.createdAt).slice(0, 4);
+  $("againWrap").hidden = !again.length;
+  $("again").innerHTML = again.map((o) => `<div class="mini"><div class="row">${catBadge(o.cat || "other", 18)}<span class="muted xs-t"><bdi>${esc(agoT(o.createdAt))}</bdi></span></div><div class="it">${esc(o.items)}</div><button class="btn soft sm" type="button" data-re="${esc(o.id)}">${esc(t("reorder"))}</button></div>`).join("");
+  $("feeNote").textContent = t("fee_note", { fee: rs(S.deliveryFee) });
+}
+let amapP = null;
+$("kycBox").addEventListener("click", (e) => { if (e.target.closest("[data-kyc]")) showKyc(); });
+$("cats").addEventListener("click", (e) => { const b = e.target.closest("[data-cat]"); if (b) openNew(b.dataset.cat); });
+$("parcelBtn").addEventListener("click", () => openNew("parcel"));
+$("again").addEventListener("click", (e) => { const b = e.target.closest("[data-re]"); if (b) { const o = orders.get(b.dataset.re); if (o) openNew(o.cat || (o.type === "pickup" ? "parcel" : "other"), o); } });
+
+// ---------------- new order ----------------
+function fillAreas(sel, value) {
+  const list = [...S.areas];
+  sel.innerHTML = `<option value="">${esc(t("f_area_ph"))}</option>` + list.map((a) => `<option value="${esc(a)}">${esc(a)}</option>`).join("") + `<option value="__other">${esc(t("area_other"))}</option>`;
+  sel.value = value && list.includes(value) ? value : value ? "__other" : "";
+}
+function paintNewTexts() {
+  const parcel = cat === "parcel";
+  $("newTitle").textContent = t("cat_" + cat);
+  $("itemsLabel").textContent = t(parcel ? "f_items_parcel" : "f_items");
+  $("items").placeholder = t(parcel ? "f_items_parcel_ph" : "f_items_ph");
+  $("send").textContent = t("place");
+  const chips = parcel ? [] : t("chips_" + cat).split("|").filter(Boolean);
+  $("chipsBox").hidden = !chips.length;
+  $("chips").innerHTML = chips.map((c) => `<button type="button" class="chipq" data-chip="${esc(c)}">+ ${esc(c)}</button>`).join("");
+  paintAttach(); paintGps(); syncSummary();
+}
+function paintAttach() {
+  $("voiceBtn").className = "attbtn" + (recording ? " rec" : voice ? " on" : "");
+  $("voiceTxt").textContent = recording ? t("f_rec", { s: recording.s || 0 }) : voice ? t("f_voice_added") : t("f_voice");
+  $("photoBtn").className = "attbtn" + (photo ? " on" : "");
+  $("photoTxt").textContent = photo ? t("f_photo_added") : t("f_photo");
+  $("attPrev").innerHTML = (voice ? `<div class="attprev"><audio controls src="${esc(voice.audio)}"></audio><button type="button" class="btn ghost sm" data-rm="voice">${esc(t("f_remove"))}</button></div>` : "")
+    + (photo ? `<div class="attprev"><img src="${esc(photo)}" alt=""><span class="grow sm-t">${esc(t("f_photo_added"))}</span><button type="button" class="btn ghost sm" data-rm="photo">${esc(t("f_remove"))}</button></div>` : "");
+}
+$("chips").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-chip]");
+  if (!b) return;
+  const cur = $("items").value.trim();
+  $("items").value = cur ? cur.replace(/[,،\s]*$/, "") + ", " + b.dataset.chip : b.dataset.chip;
+});
+$("voiceBtn").addEventListener("click", async () => {
+  if (recording) { recording.ctl.stop(); return; }
+  try {
+    const ctl = await startRecording(60, (s) => { if (recording) { recording.s = s; paintAttach(); } });
+    recording = { ctl, s: 0 };
+    paintAttach();
+    const r = await ctl.done;
+    recording = null;
+    if (r) voice = r;
+    paintAttach();
+  } catch { recording = null; paintAttach(); toast(t("chat_mic")); }
+});
+$("photoIn").addEventListener("change", async (e) => {
+  const f = e.target.files?.[0];
+  if (!f) return;
+  try { photo = await compressImage(f, 1000, 0.6); } catch {}
+  e.target.value = "";
+  paintAttach();
+});
+$("attPrev").addEventListener("click", (e) => { const b = e.target.closest("[data-rm]"); if (!b) return; if (b.dataset.rm === "voice") voice = null; else photo = null; paintAttach(); });
+function paintGps() {
+  $("gpsLine").innerHTML = dest ? icon("check", 15) + esc(t("f_gps_ok", { acc: dest.acc || here?.acc || 10 })) : "";
+}
+function openNew(k, from) {
+  if (!canOrderNow()) return;
+  cat = k;
+  const parcel = k === "parcel", p = profile(), kl = kycLocal(), lockPhone = !!kl && kycState() !== "off";
+  $("shopBox").hidden = parcel; $("pickupBox").hidden = !parcel; $("estBox").hidden = parcel; $("sItemsRow").hidden = parcel;
+  $("items").value = from?.items || "";
+  $("shop").value = from?.shop || "";
+  $("pickup").value = from?.pickup || "";
+  $("estimate").value = from?.estimate || "";
+  fillAreas($("area"), from?.area || p.area || "");
+  $("address").value = from?.address || p.address || "";
+  $("name").value = p.name || (kl && kl.name) || "";
+  // KYC wala number hi order par chalta hai
+  $("phone").value = lockPhone ? kl.phone : p.phone || "";
+  $("phone").readOnly = lockPhone;
+  $("phoneLock").hidden = !lockPhone;
+  $("note").value = "";
+  $("formErr").textContent = "";
+  $("pickmap").hidden = true; $("pinHint").hidden = true;
+  recording?.ctl.cancel(); recording = null; voice = null; photo = null;
+  dest = here ? { lat: here.lat, lng: here.lng, acc: here.acc } : null;
+  show("new");
+}
+function syncSummary() {
+  const est = cat === "parcel" ? 0 : num($("estimate").value);
+  $("sFee").textContent = rs(S.deliveryFee);
+  $("sItems").textContent = est ? rs(est) : "-";
+  $("sTotal").textContent = rs(S.deliveryFee + est);
+}
+$("estimate").addEventListener("input", syncSummary);
+
+// Ghar ka pin: kheench kar, map par tap kar ke, ya "meri location" se (sirf daire ke andar)
+let pickMap = null;
+function setPin(p, m) {
+  if (!inArea(p, S)) { toast(t("e_outside", { r: S.radiusKm })); if (m && dest) m.pickPin(dest); return; }
+  dest = { lat: p.lat, lng: p.lng, acc: Math.round(p.acc && p.acc < 60 ? p.acc : 5) };
+  if (m) m.pickPin(dest, (q) => setPin(q, m));
+  paintGps();
+}
+$("adjBtn").addEventListener("click", async () => {
+  const box = $("pickmap");
+  box.hidden = !box.hidden; $("pinHint").hidden = box.hidden;
+  if (box.hidden) return;
+  if (!pickMap) {
+    pickMap = createMap(box, S, { controls: ["locate", "area", "full"], youLabel: t("map_you"), centreLabel: t("area_centre"), onLocate: (p) => pickMap.then((m) => m && setPin(p, m)), onLocateFail: () => toast(t("gate_denied")) }).catch(() => null);
+    const m0 = await pickMap;
+    if (m0) m0.onClick((p) => setPin(p, m0));
+    else { box.hidden = true; $("pinHint").hidden = true; }
+  }
+  const m = await pickMap;
+  if (m && dest) m.pickPin(dest, (q) => setPin(q, m));
+  else if (m) m.fitArea();
+});
+
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const err = (k, v) => { $("formErr").textContent = t(k, v); return false; };
+  $("formErr").textContent = "";
+  const parcel = cat === "parcel";
+  const f = {
+    items: $("items").value.trim(), shop: parcel ? "" : $("shop").value.trim(), pickup: parcel ? $("pickup").value.trim() : "",
+    estimate: parcel ? 0 : num($("estimate").value), area: $("area").value, address: $("address").value.trim(),
+    name: $("name").value.trim(), phone: norm($("phone").value), note: $("note").value.trim(),
+  };
+  if (recording) recording.ctl.stop();
+  if (!f.items && !voice && !photo) return err("e_items");
+  if (parcel && !f.pickup) return err("e_items");
+  if (!f.area) return err("e_area");
+  if (!f.address || !f.name) return err("e_area");
+  if (!validPhone(f.phone)) return err("e_phone");
+  if (!S.accepting) return err("paused_text");
+  if (!isOpen(S)) return err("e_closed", { from: hourLabel(S.openFrom), to: hourLabel(S.openTo) });
+  if (!dest) { try { const p = await getPos(); dest = p; here = p; } catch { return err("e_noloc"); } }
+  if (!inArea(dest, S)) return err("e_outside", { r: S.radiusKm });
+  const activeMine = [...orders.values()].filter((o) => ACTIVE.includes(o.status)).length;
+  if (activeMine >= S.maxActivePerCustomer) return err("e_active", { n: activeMine });
+  // KYC dobara check (network dheema ho to abhi load karo)
+  const kl = kycLocal();
+  if (kl && kycState() === "loading") { try { kycDoc = await getOne("kyc", kl.ref); } catch {} }
+  const kst = kycState();
+  if (kst === "none" || kst === "rejected" || (kst === "pending" && S.kycMode !== "allow")) { canOrderNow(); return false; }
+  if (kl && kst !== "off" && f.phone !== kl.phone) return err("kyc_phone_locked");
+
+  const btn = $("send");
+  btn.disabled = true; btn.textContent = t("placing");
+  try {
+    // Pehla order kabhi nahi rokte; sirf admin ke block kiye number/device se order nahi hota
+    const [b1, b2] = await Promise.all([getWhere("blocks", "value", f.phone), getWhere("blocks", "value", dev)]);
+    const ip = await getIp();
+    // Order kahan khade ho kar kiya: us waqt ki taaza GPS
+    let stand = here;
+    try { stand = await getPos(6000); here = stand; } catch {}
+    if (b1.length || b2.length) {
+      fraudCheck({ device: dev, phone: f.phone, name: f.name, ip, lat: stand?.lat ?? null, lng: stand?.lng ?? null, acc: stand?.acc ?? null, ua: uaShort(), ts: Date.now() }, "fraud_order").catch(() => {});
+      return err("e_blocked");
+    }
+    // Awaz aur tasveer alag save (order halka rahe)
+    const voiceId = voice ? await putMedia("voice", voice.audio) : "";
+    const photoId = photo ? await putMedia("photo", photo) : "";
+    const no = "KM-" + Math.floor(10000 + Math.random() * 89999);
+    const code = String(Math.floor(1000 + Math.random() * 9000));
+    const order = {
+      no, type: parcel ? "pickup" : "shop", cat, ...f, area: f.area === "__other" ? "Other" : f.area,
+      dest: { lat: dest.lat, lng: dest.lng }, acc: Math.round(dest.acc || here?.acc || 0),
+      orderLoc: stand ? { lat: stand.lat, lng: stand.lng, acc: Math.round(stand.acc || 0) } : null,
+      voiceId, voiceDur: voice?.dur || 0, photoId,
+      fee: S.deliveryFee, status: "new", rider: "", riderId: "", riderPhone: "",
+      otpHash: otpHash(no, code), ip, device: dev, ua: uaShort(), createdAt: Date.now(),
+      kyc: kst === "off" ? (kycDoc ? kycDoc.status || "" : "") : kst === "loading" ? "pending" : kst, kycRef: kl ? kl.ref : "",
+    };
+    const id = await add("orders", order);
+    kv.setItem("kmd_my", JSON.stringify([id, ...myIds()].slice(0, 40)));
+    kv.setItem("kmd_otp", JSON.stringify({ ...myCodes(), [id]: code }));
+    kv.setItem("kmd_profile", JSON.stringify({ ...profile(), name: f.name, phone: f.phone, area: order.area, address: f.address }));
+    track(id);
+    openTrack(id);
+    toast(t("placed"));
+  } catch (ex) {
+    console.error(ex);
+    err("e_net");
+  } finally {
+    btn.disabled = false; btn.textContent = t("place");
+  }
+});
+
+// ---------------- my orders ----------------
+function track(id) {
+  if (orders.has(id) || lastStatus.has(id)) return;
+  lastStatus.set(id, null);
+  watchOne("orders", id, (o) => {
+    if (!o) { orders.delete(id); renderAll(); return; }
+    const prev = lastStatus.get(id);
+    if (prev && prev !== o.status) { beep(); toast(orderNo(o) + " · " + t("st_" + o.status)); if (!ACTIVE.includes(o.status)) refreshTrust(); }
+    if (prev === "on_the_way" && o.status === "on_the_way" && o.arrivedAt && !orders.get(id)?.arrivedAt) { beep(); toast(t("arrived_title")); }
+    lastStatus.set(id, o.status);
+    orders.set(id, o);
+    renderAll();
+  });
+}
+myIds().forEach(track);
+
+const pillHtml = (o) => `<span class="pill ${esc(o.status)}"><i></i>${esc(t("st_" + o.status))}</span>`;
+function renderBadge() {
+  const n = [...orders.values()].filter((o) => ACTIVE.includes(o.status)).length;
+  $("badge").hidden = !n; $("badge").textContent = n;
+}
+function renderList() {
+  const list = [...orders.values()].sort((a, b) => b.createdAt - a.createdAt);
+  const act = list.filter((o) => ACTIVE.includes(o.status)), past = list.filter((o) => !ACTIVE.includes(o.status));
+  const row = (o) => `<button class="orow" type="button" data-open="${esc(o.id)}">${catBadge(o.cat || (o.type === "pickup" ? "parcel" : "other"), 20)}
+    <span class="grow"><span class="row"><b class="ono">${esc(orderNo(o))}</b>${pillHtml(o)}</span><span class="it">${esc(o.items)}</span><span class="muted xs-t">${esc(t("placed_ago", { t: "\u2068" + agoT(o.createdAt) + "\u2069" }))}</span></span>
+    <span class="flip">${icon("chev", 18)}</span></button>`;
+  $("olist").innerHTML = (act.length ? `<div class="sec-title">${esc(t("active_label"))}</div>` + act.map(row).join("") : "") +
+    (past.length ? `<div class="sec-title" style="margin-top:6px">${esc(t("past_label"))}</div>` + past.map(row).join("") : "");
+  $("none").hidden = list.length > 0;
+}
+$("olist").addEventListener("click", (e) => { const b = e.target.closest("[data-open]"); if (b) openTrack(b.dataset.open); });
+
+// ---------------- tracking ----------------
+let tmapP = null;
+function openTrack(id) { curTrack = id; rating = 0; show("track"); }
+const STEPS = [["step_placed", "createdAt"], ["step_assigned", "acceptedAt"], ["step_way", "pickedAt"], ["step_done", "deliveredAt"]];
+const IDX = { new: 0, accepted: 1, on_the_way: 2, delivered: 3 };
+function paintTrack() {
+  const o = orders.get(curTrack);
+  if (!o) return;
+  const active = ACTIVE.includes(o.status), rl = o.riderLoc;
+  $("trNo").textContent = orderNo(o);
+  $("trAgo").textContent = t("placed_ago", { t: "\u2068" + agoT(o.createdAt) + "\u2069" });
+  $("trPill").innerHTML = pillHtml(o);
+
+  // headline
+  let big = "", sub = "";
+  const box = $("trEta");
+  box.classList.toggle("warn", o.status === "cancelled" || o.status === "failed");
+  if (o.status === "new") { big = t("tk_new"); sub = t("tk_new_s"); }
+  else if (o.status === "accepted") { big = t("tk_acc", { rider: o.rider }); sub = o.confirmedAt ? t("tk_conf_s") : t("tk_acc_s"); }
+  else if (o.status === "on_the_way") {
+    if (rl && o.dest) { const e = eta(rl, o.dest, S.speedKmh); big = t("tk_way", { min: e.min }); sub = t("tk_way_s", { km: e.km.toFixed(1), time: "\u2066" + fmtTime(Date.now() + e.min * 60000) + "\u2069" }); }
+    else { big = t("tk_way_nl"); sub = t("tk_way_nl_s"); }
+  } else if (o.status === "delivered") { big = t("tk_done"); sub = t("tk_done_s", { m: mins(o.createdAt, o.deliveredAt) ?? "-" }); }
+  else if (o.status === "failed") { big = t("tk_failed"); sub = ""; }
+  else { big = t("tk_cancel"); sub = ""; }
+  $("trBig").textContent = big; $("trSub").textContent = sub; $("trSub").hidden = !sub;
+
+  // steps
+  const cur = IDX[o.status] ?? 0, showSteps = o.status !== "cancelled" && o.status !== "failed";
+  $("trSteps").hidden = !showSteps;
+  $("trSteps").innerHTML = STEPS.map(([k, f], i) => {
+    const done = i < cur || o.status === "delivered", now = i === cur && o.status !== "delivered";
+    return `<div class="step ${done ? "done" : ""} ${now ? "now" : ""}"><i>${done ? icon("check", 12) : ""}</i>${esc(t(k))}<small dir="ltr">${o[f] && (done || now) ? fmtTime(o[f]) : ""}</small></div>`;
+  }).join("");
+
+  // map
+  const showMap = active && (rl || o.dest);
+  $("tmap").hidden = !showMap;
+  if (showMap) {
+    if (!tmapP) tmapP = createMap($("tmap"), S, { controls: ["area", "full"], centreLabel: t("area_centre") }).catch(() => null);
+    tmapP.then((m) => m && m.update(o.status === "new" ? null : rl, o.dest));
+  }
+
+  $("trArrive").hidden = !(o.status === "on_the_way" && o.arrivedAt);
+
+  // delivery code
+  const code = myCodes()[o.id];
+  $("trCode").hidden = !active;
+  $("trCodeVal").textContent = code || "----";
+  $("trCode").querySelector("small").textContent = code ? t("code_text") : t("code_missing");
+
+  // bill
+  const bill = $("trBill");
+  if (o.bill !== "" && o.bill != null && (o.status === "on_the_way" || o.status === "delivered" || o.status === "accepted")) {
+    bill.hidden = false;
+    bill.innerHTML = `<b>${esc(o.status === "delivered" ? t("paid") : t("bill_title"))}</b>
+      ${o.type === "pickup" ? "" : `<div class="row"><span>${esc(t("bill_items"))}</span><span>${rs(o.bill)}</span></div>`}
+      <div class="row"><span>${esc(t("bill_fee"))}</span><span>${rs(o.fee)}</span></div>
+      <div class="row total"><span>${esc(t("bill_total"))}</span><span>${rs(num(o.bill) + num(o.fee))}</span></div>
+      ${o.receipt || o.receiptId ? `<div class="sec-title" style="margin-top:6px">${esc(t("bill_photo"))}</div><img class="billimg" id="rcptImg" alt="${esc(t("bill_photo"))}" ${mediaSrc(o.receipt, o.receiptId)}>` : ""}
+      ${o.status !== "delivered" && !o.billDisputed ? `<button class="btn ghost sm" type="button" id="billWrong">${icon("alert", 15)} ${esc(t("bill_wrong"))}</button>` : ""}`;
+  } else if (o.status === "accepted" && o.type !== "pickup") {
+    bill.hidden = false;
+    bill.innerHTML = `<b>${esc(t("bill_title"))}</b><div class="muted sm-t">${esc(t("bill_wait"))}</div>`;
+  } else bill.hidden = true;
+
+  // customer khud batata hai kitna cash diya
+  const pay = $("trPay"), amt = num(o.bill) + num(o.fee);
+  const payReady = (o.status === "on_the_way" && (o.type === "pickup" || (o.bill !== "" && o.bill != null))) || o.status === "delivered";
+  pay.hidden = !payReady;
+  if (payReady) {
+    pay.className = "paybox" + (o.custPaid ? " done" : "");
+    pay.innerHTML = o.custPaid
+      ? `<div class="row"><b>${icon("check", 16)} ${esc(t("pay_done", { amt: rs(o.custPaid) }))}</b></div>`
+      : `<b>${esc(t("pay_title"))}</b><div class="sm-t">${esc(t("pay_q", { amt: rs(amt) }))}</div>
+         <button class="btn block" type="button" data-pay="yes">${esc(t("pay_yes", { amt: rs(amt) }))}</button>
+         <button class="btn sec block" type="button" data-pay="other">${esc(t("pay_other"))}</button>
+         <div class="hint">${esc(t("pay_note"))}</div>`;
+  }
+
+  // rider
+  const hasRider = !!o.rider && !["new", "cancelled"].includes(o.status);
+  $("trRider").hidden = !hasRider;
+  if (hasRider) {
+    $("trAv").textContent = initials(o.rider);
+    $("trRname").textContent = o.rider;
+    $("trCall").href = "tel:" + (o.riderPhone || "");
+    $("trCall").innerHTML = icon("phone", 18);
+    $("trChat").innerHTML = icon("message", 18);
+    $("trChat").hidden = !active;
+  }
+
+  $("trMeta").innerHTML = `<dt>${esc(t("d_items"))}</dt><dd>${esc(o.items || "-")}</dd>
+    ${o.voice || o.voiceId ? `<dt>${esc(t("f_voice"))}</dt><dd><audio controls preload="none" ${mediaSrc(o.voice, o.voiceId)} style="max-width:100%;height:36px"></audio></dd>` : ""}
+    ${o.listPhoto || o.photoId ? `<dt>${esc(t("f_photo"))}</dt><dd><img ${mediaSrc(o.listPhoto, o.photoId)} alt="" class="billimg" style="max-height:160px" data-zoom="1"></dd>` : ""}
+    ${o.shop ? `<dt>${esc(t("f_shop"))}</dt><dd>${esc(o.shop)}</dd>` : ""}${o.pickup ? `<dt>${esc(t("f_pickup"))}</dt><dd>${esc(o.pickup)}</dd>` : ""}
+    <dt>${esc(t("d_to"))}</dt><dd>${esc([o.area, o.address].filter(Boolean).join(", "))}</dd><dt>${esc(t("sum_pay"))}</dt><dd>${esc(t("cash"))}</dd>`;
+
+  // rating
+  const canRate = o.status === "delivered";
+  $("trRate").hidden = !canRate;
+  if (canRate) {
+    const r = o.rating || rating;
+    $("stars").innerHTML = [1, 2, 3, 4, 5].map((n) => `<button type="button" data-s="${n}" class="${n <= r ? "on" : ""}" ${o.rating ? "disabled" : ""} aria-label="${n}">${icon("star", 30)}</button>`).join("");
+    $("rateBtn").hidden = !!o.rating;
+    $("rateBtn").disabled = !rating;
+    $("trRate").querySelector("b").textContent = o.rating ? t("rated", { n: o.rating }) : t("rate_title");
+  }
+  $("trReorder").hidden = active;
+  $("trCancel").hidden = o.status !== "new";
+  hydrateMedia($("v-track"));
+}
+function zoom(src) {
+  const ov = document.createElement("div");
+  ov.className = "modal center";
+  ov.innerHTML = `<div class="sheet"><img class="receipt" alt="" src="${esc(src)}"><button class="btn sec block" type="button">${esc(t("close"))}</button></div>`;
+  let release = pushBack(() => { release = null; ov.remove(); });
+  ov.addEventListener("click", (ev) => { if (ev.target === ov || ev.target.closest("button")) { ov.remove(); if (release) { const r = release; release = null; r(); } } });
+  document.body.appendChild(ov);
+}
+$("trMeta").addEventListener("click", (e) => { const i = e.target.closest("[data-zoom]"); if (i && i.getAttribute("src")) zoom(i.getAttribute("src")); });
+$("trBill").addEventListener("click", async (e) => {
+  const o = orders.get(curTrack);
+  const ri = e.target.closest("#rcptImg");
+  if (ri) return ri.getAttribute("src") && zoom(ri.getAttribute("src"));
+  if (e.target.closest("#billWrong")) {
+    const p = profile();
+    await update("orders", o.id, { billDisputed: Date.now() });
+    await add("complaints", { orderId: o.id, orderShort: orderNo(o), rider: o.rider || "", name: p.name || o.name, phone: p.phone || o.phone, device: dev, text: `Bill dispute: customer says the bill (${rs(o.bill)}) looks wrong.`, status: "open", createdAt: Date.now() });
+    toast(t("bill_wrong_ok"));
+  }
+});
+$("trPay").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-pay]");
+  if (!b) return;
+  const o = orders.get(curTrack), due = num(o.bill) + num(o.fee);
+  let paid = due;
+  if (b.dataset.pay === "other") {
+    const v = await askText(t("pay_enter"), "", "Rs", t("pay_btn"));
+    if (v === null || !num(v)) return;
+    paid = num(v);
+  }
+  let loc = here;
+  try { loc = await getPos(6000); } catch {}
+  await update("orders", o.id, { custPaid: paid, custPaidAt: Date.now(), custPayLoc: loc ? { lat: loc.lat, lng: loc.lng, acc: Math.round(loc.acc || 0) } : null, payMismatch: paid !== due });
+  toast(t("pay_done", { amt: rs(paid) }));
+});
+$("stars").addEventListener("click", (e) => { const b = e.target.closest("[data-s]"); if (b && !b.disabled) { rating = Number(b.dataset.s); paintTrack(); } });
+$("rateBtn").addEventListener("click", async () => { if (!rating) return; await update("orders", curTrack, { rating, ratedAt: Date.now() }); toast(t("rate_thanks")); });
+$("trChat").addEventListener("click", () => { const o = orders.get(curTrack); openChat({ orderId: o.id, role: "customer", name: o.name, title: o.rider, subtitle: orderNo(o) }); });
+$("trCancel").addEventListener("click", async () => {
+  const o = orders.get(curTrack);
+  if (o.status !== "new") return;
+  if (await askYes(t("cancel_q"), t("cancel_order"), true)) { await update("orders", o.id, { status: "cancelled", cancelledAt: Date.now(), cancelledBy: "customer" }); toast(t("cancelled_ok")); }
+});
+$("trReorder").addEventListener("click", () => { const o = orders.get(curTrack); openNew(o.cat || (o.type === "pickup" ? "parcel" : "other"), o); });
+$("trReport").addEventListener("click", () => { show("account"); $("corder").value = curTrack; $("ctext").focus(); });
+
+// ---------------- account ----------------
+// Customer ka apna darja (pichle orders se)
+async function refreshTrust() {
+  const p = profile();
+  if (!validPhone(p.phone)) { trust = null; return; }
+  try { trust = trustOf(await getWhere("orders", "phone", norm(p.phone)), p.phone, dev); renderAll(); } catch {}
+}
+function renderAccount() {
+  const p = profile();
+  const tr = trust;
+  $("trustCard").innerHTML = `<div class="ei">${icon("award", 22)}</div><div class="grow"><div class="muted xs-t">${esc(t("trust_title"))}</div>
+    <b>${esc(t("trust_" + (tr ? tr.level : "new")))}</b>
+    <div class="trustline">${tr ? esc(t("trust_stats", { d: tr.delivered, c: tr.cancelled, f: tr.failed })) : ""}${tr && tr.avgWait != null ? " · " + esc(t("trust_wait", { m: tr.avgWait })) : ""}</div>
+    <div class="hint" style="margin-top:4px">${esc(t("trust_tip"))}</div></div>`;
+  // KYC card
+  const st = kycState(), kl = kycLocal();
+  const shown = st !== "off" || !!kl;
+  $("kycCard").hidden = !shown;
+  if (shown) {
+    const lab = st === "off" || st === "loading" ? (kycDoc ? "kyc_st_" + (kycDoc.status || "pending") : kl ? "kyc_st_pending" : "kyc_st_none") : "kyc_st_" + st;
+    $("kycCard").innerHTML = `<div class="ei" style="${st === "approved" ? "" : st === "rejected" ? "background:var(--red-soft);color:var(--red)" : "background:var(--amber-soft);color:var(--amber)"}">${icon("idcard", 22)}</div>
+      <div class="grow"><div class="muted xs-t">${esc(t("kyc_card"))}</div><b>${esc(t(lab))}</b>
+      ${kl ? `<div class="trustline"><bdi dir="ltr">${esc(kl.mask || "")}</bdi> · <bdi dir="ltr">${esc(kl.phone)}</bdi> · ${esc(t("kyc_sent_at", { t: agoT(kl.at) }))}</div>` : ""}
+      ${st === "pending" ? `<div class="hint" style="margin-top:4px">${esc(t(S.kycMode === "allow" ? "kyc_pending_allow" : "kyc_pending_s", { time: kycTime() }))}</div>` : ""}
+      ${st === "none" || st === "rejected" ? `<div style="margin-top:8px"><button class="btn sm" type="button" data-kyc="start">${esc(t(st === "rejected" ? "kyc_again" : "kyc_start"))}</button></div>`
+        : st === "approved" ? `<div style="margin-top:6px"><button class="btn ghost sm" type="button" data-kyc="other" style="padding:0;min-height:30px">${esc(t("kyc_verify_other"))}</button></div>` : ""}</div>`;
+  }
+  $("verTxt").textContent = t("app_version", { v: APP_VERSION.indexOf("__") === 0 ? "dev" : APP_VERSION });
+  if (document.activeElement?.closest?.("#pform")) return;
+  const lockPhone = !!kl && st !== "off";
+  $("pname").value = p.name || ""; $("pphone").value = lockPhone ? kl.phone : p.phone || "";
+  $("pphone").readOnly = lockPhone;
+  fillAreas($("parea"), p.area || ""); $("paddress").value = p.address || "";
+  document.querySelectorAll("[data-l]").forEach((b) => b.classList.toggle("on", b.dataset.l === getLang()));
+  $("hoursTxt").textContent = t("help_text") + " " + t("hours", { from: hourLabel(S.openFrom), to: hourLabel(S.openTo) });
+  const sel = $("corder"), cur = sel.value;
+  sel.innerHTML = `<option value="">${esc(t("cmp_general"))}</option>` + [...orders.values()].sort((a, b) => b.createdAt - a.createdAt).map((o) => `<option value="${esc(o.id)}">${esc(orderNo(o))} · ${esc(o.items.slice(0, 26))}</option>`).join("");
+  sel.value = cur;
+}
+document.querySelectorAll("[data-l]").forEach((b) => b.addEventListener("click", () => switchLang(b.dataset.l)));
+$("kycCard").addEventListener("click", (e) => { const b = e.target.closest("[data-kyc]"); if (b) showKyc(b.dataset.kyc === "other"); });
+$("pform").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const kl = kycLocal();
+  const phone = kl && kycState() !== "off" ? kl.phone : norm($("pphone").value);
+  if (phone && !validPhone(phone)) { toast(t("e_phone")); return; }
+  const a = $("parea").value;
+  kv.setItem("kmd_profile", JSON.stringify({ name: $("pname").value.trim(), phone, area: a === "__other" ? "Other" : a, address: $("paddress").value.trim() }));
+  document.activeElement?.blur();
+  toast(t("saved")); renderAll();
+});
+$("cform").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const p = profile(), o = orders.get($("corder").value);
+  try {
+    await add("complaints", { orderId: o?.id || "", orderShort: o ? orderNo(o) : "", rider: o?.rider || "", name: p.name || o?.name || "Customer", phone: p.phone || o?.phone || "", device: dev, text: $("ctext").value.trim(), status: "open", createdAt: Date.now() });
+    $("ctext").value = "";
+    toast(t("cmp_ok"));
+  } catch { toast(t("cmp_fail")); }
+});
+
+// ---------------- settings (sab functions ke baad, taake pehli render par sab tayyar ho) ----------------
+watchKyc();
+watchSettings((s) => {
+  S = s;
+  $("brandName").textContent = s.appName;
+  document.title = s.appName;
+  $("supCall").href = "tel:" + s.supportPhone;
+  $("supWa").href = "https://wa.me/" + s.supportWhatsapp;
+  if (here && $("app").hidden && $("kyc").hidden && gateMode !== "outside") onLocated(here);
+  else if (here && gateMode === "outside" && !$("gate").hidden && inArea(here, s)) onLocated(here); // daira bara hua to andar aa jao
+  else if (!$("gate").hidden) paintGate();
+  renderAll();
+});
+refreshTrust();
+// pehle se ijazat ho to khud hi location le lo
+try { navigator.permissions?.query({ name: "geolocation" }).then((r) => { if (r.state === "granted") locate(); }).catch(() => {}); } catch {}
+
+setInterval(() => { if (!$("app").hidden) { renderList(); if (view === "track") paintTrack(); } }, 30000);
+if ("serviceWorker" in navigator && location.protocol.startsWith("http") && !inApp()) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>

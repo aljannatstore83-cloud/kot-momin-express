@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B7A4B">
+<meta name="robots" content="noindex">
+<title>KM Express Rider</title>
+<link rel="manifest" href="manifest-rider.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="KM Rider">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Sora:wght@600;700&family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<!-- SIGN IN -->
+<div id="login" class="loginwrap">
+  <form id="loginForm" class="logincard" autocomplete="off" novalidate>
+    <div class="row"><div class="brand"><span class="logo" data-icon="truck" data-size="20"></span><div><b id="brandName"></b><small data-t="r_app"></small></div></div>
+      <button class="langbtn" type="button" id="lang1" data-t="lang_btn"></button></div>
+    <div><h1 data-t="r_signin"></h1><p class="muted sm-t" style="margin-top:4px" data-t="r_signin_text"></p></div>
+    <div class="field"><label for="phone" data-t="f_phone"></label><input id="phone" type="tel" inputmode="tel" required placeholder="03xx xxxxxxx" autocomplete="username"></div>
+    <div class="field"><label for="pin" data-t="r_pin"></label><input id="pin" type="password" inputmode="numeric" required data-tp="r_pin_ph" autocomplete="current-password"></div>
+    <div class="err" id="loginErr" role="alert"></div>
+    <button class="btn block" type="submit" data-t="r_signin"></button>
+    <button id="installBtn" class="btn sec block" type="button" hidden><span data-t="install"></span></button>
+    <div class="installhint" id="instHint" data-t="install_hint"></div>
+    <div class="hint" id="demoHint" hidden data-t="r_demo"></div>
+  </form>
+</div>
+
+<!-- APP -->
+<div id="app" class="app" hidden>
+  <header class="appbar">
+    <div class="brand"><span class="av" id="meAv"></span><div><b id="meName"></b><small id="meSub"></small></div></div>
+    <button id="onlineBtn" class="switch" type="button" aria-pressed="false"><span id="onlineTxt"></span><span class="knob"></span></button>
+  </header>
+
+  <main class="content">
+    <div class="gps" id="gps"><i></i><span id="gpsTxt"></span></div>
+    <label class="hint" id="simRow" hidden style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="sim" style="width:auto;min-height:0"><span data-t="sim_label"></span></label>
+    <div class="card rmapcard" id="rmapCard" hidden><div class="row"><b data-t="r_map"></b><span class="muted xs-t" id="rmapNote"></span></div><div id="rmap" class="map"></div></div>
+    <div id="list" class="stack"></div>
+  </main>
+
+  <nav class="tabbar" id="tabs" aria-label="Main">
+    <button class="tab on" data-f="avail" type="button" data-icon="list" data-size="22"><span data-t="tab_avail"></span><span class="bd" id="bdA" hidden>0</span></button>
+    <button class="tab" data-f="active" type="button" data-icon="bolt" data-size="22"><span data-t="tab_active"></span><span class="bd" id="bdB" hidden>0</span></button>
+    <button class="tab" data-f="wallet" type="button" data-icon="wallet" data-size="22"><span data-t="tab_wallet"></span></button>
+  </nav>
+</div>
+
+<script type="module">
+import { watch, watchOne, add, update, claimOrder, getWhere, watchSettings, cloud, kv, ACTIVE, putMedia, mediaSrc, hydrateMedia } from "./db.js";
+import { norm, esc, icon, hydrateIcons, orderNo, rs, num, fmtDate, mins, eta, initials, toast, beep, onInstallable, promptInstall, riderHash, otpHash, compressImage, startOfToday, collected, trustOf, TRUST_CLASS, createMap, getPos, inApp, pushBack } from "./util.js";
+import { t, initLang, setLang, getLang, applyLang, agoT, DICT } from "./i18n.js";
+import { openChat } from "./chat.js";
+import { askYes, askChoice } from "./dialog.js";
+
+const $ = (id) => document.getElementById(id);
+initLang("rider");
+hydrateIcons();
+if (!cloud) $("demoHint").hidden = false;
+onInstallable(() => ($("installBtn").hidden = false));
+try { if (inApp() || window.matchMedia("(display-mode: standalone)").matches || navigator.standalone) $("instHint").hidden = true; } catch (e) {}
+$("installBtn").addEventListener("click", () => promptInstall());
+
+let S = null, me = null, orders = [], settles = [], filter = "avail", started = false, lastNew = 0, firstSnap = true;
+try { me = JSON.parse(kv.getItem("kmd_rider_me") || "null"); } catch {}
+let online = kv.getItem("kmd_rider_online") !== "0";
+const bills = {}, codes = {}, photos = {};
+const OUT = ["accepted", "on_the_way"];
+const mine = () => orders.filter((o) => o.riderId === me?.id && OUT.includes(o.status));
+
+watchSettings((s) => { S = s; $("brandName").textContent = s.appName; if (started) safeRender(); });
+function switchLang() { setLang(getLang() === "ur" ? "en" : "ur"); paintOnline(); syncTracking(true); if (started) render(); }
+$("lang1").addEventListener("click", switchLang);
+
+// ---------------- online ----------------
+function paintOnline() {
+  $("onlineBtn").classList.toggle("on", online);
+  $("onlineBtn").setAttribute("aria-pressed", String(online));
+  $("onlineTxt").textContent = t(online ? "online" : "offline");
+  $("meSub").textContent = t(online ? "r_on_sub" : "r_off_sub");
+}
+const pushStatus = () => { if (me) update("riders", me.id, { online, lastSeen: Date.now() }).catch(() => {}); };
+$("onlineBtn").addEventListener("click", () => {
+  online = !online;
+  kv.setItem("kmd_rider_online", online ? "1" : "0");
+  paintOnline(); pushStatus(); render();
+  if (online) setTimeout(idleLoc, 500);
+  toast(t(online ? "r_on_toast" : "r_off_toast"));
+});
+
+// ---------------- GPS ----------------
+let watchId = null, simTimer = null, lastPos = null, lastPush = 0, wakeLock = null, gpsKey = "gps_idle", gpsLive = false;
+const setGps = (k, live) => { gpsKey = k; gpsLive = !!live; $("gpsTxt").textContent = t(k); $("gps").classList.toggle("live", gpsLive); };
+// Rider ki jagah admin ke live map ke liye (riders/{id}.loc), har 30 second
+let lastRiderLoc = 0;
+function pushRiderLoc(p, force) {
+  const now = Date.now();
+  if (!me || !p || (!force && now - lastRiderLoc < 30000)) return;
+  lastRiderLoc = now;
+  update("riders", me.id, { loc: { lat: p.lat, lng: p.lng, ts: now }, lastSeen: now }).catch(() => {});
+}
+// Online magar khaali rider: har 90 second aik dafa location (battery bachane ke liye)
+function idleLoc() {
+  if (!cloud || !online || !me || mine().length || document.hidden) return;
+  getPos(15000).then((p) => { lastPos = { lat: p.lat, lng: p.lng }; pushRiderLoc(lastPos, true); }).catch(() => {});
+}
+function pushLoc(p) {
+  lastPos = p;
+  paintRiderMap(true);
+  const now = Date.now();
+  if (now - lastPush < 6000) return;
+  lastPush = now;
+  mine().forEach((o) => update("orders", o.id, { riderLoc: { lat: p.lat, lng: p.lng, ts: now } }).catch(() => {}));
+  pushRiderLoc(p);
+  if (!simTimer) setGps("gps_live", true);
+}
+function startTracking() {
+  if ($("sim").checked) {
+    const first = mine()[0];
+    const target = first?.dest || { lat: S.center.lat + 0.01, lng: S.center.lng + 0.01 };
+    if (!lastPos) lastPos = first?.riderLoc ? { lat: first.riderLoc.lat, lng: first.riderLoc.lng } : { lat: target.lat - 0.015, lng: target.lng - 0.015 };
+    simTimer = setInterval(() => {
+      const o = mine()[0], tg = o?.dest || target;
+      const k = o?.status === "on_the_way" ? 0.12 : 0.05;
+      lastPush = 0;
+      pushLoc({ lat: lastPos.lat + (tg.lat - lastPos.lat) * k, lng: lastPos.lng + (tg.lng - lastPos.lng) * k });
+    }, 3000);
+    setGps("gps_sim", true);
+    return;
+  }
+  if (!navigator.geolocation) { setGps("gps_off"); return; }
+  watchId = navigator.geolocation.watchPosition(
+    (p) => pushLoc({ lat: p.coords.latitude, lng: p.coords.longitude }),
+    () => setGps(cloud ? "gps_off" : "gps_demo_none"),
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
+  );
+  try { navigator.wakeLock?.request("screen").then((l) => (wakeLock = l)).catch(() => {}); } catch {}
+  setGps("gps_search");
+}
+function stopTracking() {
+  if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+  clearInterval(simTimer);
+  watchId = null; simTimer = null;
+  try { wakeLock?.release(); } catch {}
+  wakeLock = null;
+}
+function syncTracking(repaint) {
+  const n = mine().length;
+  if (n && watchId === null && simTimer === null) startTracking();
+  if (!n && (watchId !== null || simTimer !== null)) { stopTracking(); setGps("gps_idle"); }
+  if (!n && gpsKey !== "gps_idle") setGps("gps_idle");
+  if (repaint) setGps(gpsKey, gpsLive);
+}
+$("sim").addEventListener("change", () => { stopTracking(); syncTracking(); });
+
+// ---------------- screens ----------------
+const mapsTo = (text, loc) => `https://www.google.com/maps/dir/?api=1&destination=${loc ? loc.lat + "," + loc.lng : encodeURIComponent(text + ", Kot Momin")}`;
+const empty = (ic, h, p) => `<div class="empty"><div class="ei">${icon(ic, 26)}</div><h3>${esc(t(h))}</h3><p class="sm-t">${esc(t(p))}</p></div>`;
+// Customer ka trust level: pichle orders, cancel, fail aur darwaze par intezar
+// Har customer ki puri history (uske number aur phone se), 5 minute ke liye yaad
+const hist = new Map();
+const histKey = (o) => norm(o.phone) + "|" + (o.device || "");
+let histBusy = false;
+async function loadHistories() {
+  if (histBusy || !me) return;
+  histBusy = true;
+  let changed = false;
+  try {
+    const shown = orders.filter((o) => o.status === "new" || (o.riderId === me.id && OUT.includes(o.status)));
+    for (const o of shown) {
+      const k = histKey(o), h = hist.get(k);
+      if (h && Date.now() - h.at < 5 * 60000) continue;
+      const lists = await Promise.all([getWhere("orders", "phone", o.phone), o.device ? getWhere("orders", "device", o.device) : Promise.resolve([])]);
+      const m = new Map();
+      lists[0].concat(lists[1]).forEach((x) => m.set(x.id, x));
+      hist.set(k, { list: [...m.values()], at: Date.now() });
+      changed = true;
+    }
+  } catch (e) { console.warn(e); }
+  histBusy = false;
+  if (changed) safeRender();
+}
+function trustHtml(o, full) {
+  const h = hist.get(histKey(o));
+  if (!h) return `<div class="trustline"><b style="color:var(--ink)">${esc(t("r_trust"))}:</b> <span class="flag">${esc(t("r_checking"))}</span></div>`;
+  const list = h.list;
+  const tr = trustOf(list, o.phone, o.device);
+  const before = Math.max(0, list.filter((x) => norm(x.phone) === norm(o.phone) && x.createdAt < o.createdAt).length);
+  // KYC: customer ka shanakhti card admin ne check kar liya ya nahi (CNIC rider ko nazar nahi aata)
+  const kyc = o.kyc === "approved" ? ` <span class="flag green">${icon("idcard", 12)} ${esc(t("r_kyc_ok"))}</span>` : o.kyc === "pending" ? ` <span class="flag">${icon("idcard", 12)} ${esc(t("r_kyc_pending"))}</span>` : "";
+  const badge = `<span class="flag ${TRUST_CLASS[tr.level]}">${icon("award", 12)} ${esc(t("trust_" + tr.level))}</span>${kyc}`;
+  if (!full) return badge;
+  return `<div class="stack" style="gap:6px"><div class="trustline"><b style="color:var(--ink)">${esc(t("r_trust"))}:</b> ${badge}
+      <span>${esc(before === 1 ? t("r_prev1") : before ? t("r_prev", { n: before }) : t("r_prev0"))}</span></div>
+    ${before ? `<div class="trustline">${esc(t("trust_stats", { d: tr.delivered, c: tr.cancelled, f: tr.failed }))}${tr.avgWait != null ? " · " + esc(t("trust_wait", { m: tr.avgWait })) : ""}</div>` : ""}
+    ${tr.level === "risk" || tr.level === "caution" ? `<div class="risk">${icon("alert", 16)}<span>${esc(t("r_risk_warn"))}</span></div>` : ""}</div>`;
+}
+const attachHtml = (o) => (o.voice || o.voiceId ? `<div class="field"><label>${esc(t("r_voice"))}</label><audio controls preload="none" ${mediaSrc(o.voice, o.voiceId)} style="width:100%;height:38px"></audio></div>` : "")
+  + (o.listPhoto || o.photoId ? `<div class="field"><label>${esc(t("r_list_photo"))}</label><img class="billimg" style="max-height:180px" ${mediaSrc(o.listPhoto, o.photoId)} alt=""></div>` : "");
+const typeTag = (o) => `<span class="tag">${esc(t(o.type === "pickup" ? "parcel" : "shop_order"))}</span>`;
+let pending = false;
+function safeRender() {
+  const a = document.activeElement;
+  if (a && a.tagName === "INPUT" && $("list").contains(a)) { pending = true; return; }
+  render();
+}
+$("list").addEventListener("focusout", () => setTimeout(() => { if (pending) { pending = false; safeRender(); } }, 150));
+
+function activeCard(o) {
+  const shopStep = o.status === "accepted" && o.confirmedAt;
+  const amount = num(o.fee) + num(o.bill);
+  let step = "";
+  if (o.status === "accepted" && !o.confirmedAt) {
+    step = `<div class="stepcard"><div class="lbl">${esc(t("r_s1"))}</div><div class="sm-t">${esc(t("r_s1_text"))}</div>
+      <div class="locrow"><a class="btn sec" href="tel:${esc(o.phone)}">${icon("phone", 16)} ${esc(t("call"))}</a><button class="btn" data-a="confirm" data-id="${esc(o.id)}">${esc(t("r_confirmed"))}</button></div></div>`;
+  } else if (shopStep && o.type !== "pickup") {
+    const ph = photos[o.id];
+    step = `<div class="stepcard"><div class="lbl">${esc(t("r_s2"))}</div><div class="sm-t">${esc(t("r_s2_text"))}</div>
+      <div class="field"><label for="bill-${esc(o.id)}">${esc(t("r_bill"))}</label><input id="bill-${esc(o.id)}" data-bill="${esc(o.id)}" inputmode="numeric" value="${esc(bills[o.id] || "")}" placeholder="${o.estimate ? esc(String(o.estimate)) : "0"}"></div>
+      <label class="filebtn">${ph ? `<img src="${esc(ph)}" alt="">` : icon("camera", 20)}<span>${esc(ph ? t("r_photo_added") : t("r_photo"))}<br><small class="muted">${esc(t("r_photo_req"))}</small></span>
+        <input type="file" accept="image/*" capture="environment" data-photo="${esc(o.id)}"></label>
+      <button class="btn block" data-a="pick" data-id="${esc(o.id)}">${esc(t("r_picked"))}</button></div>`;
+  } else if (shopStep) {
+    step = `<div class="stepcard"><div class="lbl">${esc(t("r_s2"))}</div><div class="sm-t">${esc(t("r_s2_parcel"))}</div><button class="btn block" data-a="pick" data-id="${esc(o.id)}">${esc(t("r_picked_parcel"))}</button></div>`;
+  } else if (o.status === "on_the_way") {
+    step = `<div class="stepcard"><div class="lbl">${esc(t("r_s3"))}</div><div class="money" style="font-size:18px">${esc(t("r_collect", { amt: rs(amount) }))}</div>
+      ${o.arrivedAt ? "" : `<button class="btn sec block" data-a="arrived" data-id="${esc(o.id)}">${icon("door", 16)} ${esc(t("r_arrived"))}</button>`}
+      ${o.custPaid ? `<div class="flag ${o.custPaid === amount ? "green" : "red"}" style="font-size:12.5px;padding:6px 10px">${icon("check", 13)} ${esc(t("r_paid_c", { amt: rs(o.custPaid) }))}</div>` : ""}
+      <div class="field"><label for="code-${esc(o.id)}">${esc(t("r_code"))}</label><input id="code-${esc(o.id)}" class="codein" data-code="${esc(o.id)}" inputmode="numeric" maxlength="4" value="${esc(codes[o.id] || "")}" placeholder="••••"></div>
+      <button class="btn block" data-a="done" data-id="${esc(o.id)}">${esc(t("r_complete"))}</button></div>`;
+  }
+  const toShop = o.status === "accepted";
+  return `<article class="card ocard">
+    <div class="ohead"><div><div class="ono">${esc(orderNo(o))}</div><div class="muted xs-t">${esc(t("r_acc_ago", { t: agoT(o.acceptedAt) }))}</div></div>${typeTag(o)}</div>
+    <div class="items">${esc(o.items || "")}</div>
+    ${attachHtml(o)}
+    ${trustHtml(o, true)}
+    ${step}
+    <dl class="meta"><dt>${esc(t("r_customer"))}</dt><dd>${esc(o.name)} · <span dir="ltr">${esc(o.phone)}</span></dd>
+      <dt>${esc(t(o.type === "pickup" ? "r_pick" : "r_shop"))}</dt><dd>${esc((o.type === "pickup" ? o.pickup : o.shop) || "-")}</dd>
+      <dt>${esc(t("r_to"))}</dt><dd>${esc([o.area, o.address].filter(Boolean).join(", "))}</dd>
+      ${o.estimate ? `<dt>${esc(t("r_est"))}</dt><dd>${rs(o.estimate)}</dd>` : ""}
+      ${o.note ? `<dt>${esc(t("r_note"))}</dt><dd>${esc(o.note)}</dd>` : ""}</dl>
+    <div class="oactions">
+      <a class="btn sec sm" href="${esc(mapsTo(toShop ? (o.shop || o.pickup || o.address) : o.address, toShop ? null : o.dest))}" target="_blank" rel="noopener">${icon("nav", 15)} ${esc(t("navigate"))}</a>
+      <a class="btn sec sm" href="tel:${esc(o.phone)}">${icon("phone", 15)} ${esc(t("call"))}</a>
+      <button class="btn sec sm" data-a="chat" data-id="${esc(o.id)}">${icon("message", 15)} ${esc(t("chat"))}</button>
+      <button class="btn ghost sm" data-a="problem" data-id="${esc(o.id)}">${icon("alert", 15)} ${esc(t("r_problem"))}</button>
+    </div>
+    <div class="sos">${icon("shield", 14)} ${esc(t("r_sos_note"))}</div></article>`;
+}
+
+function render() {
+  if (!S || !me) return;
+  applyLang();
+  const fresh = orders.filter((o) => o.status === "new").slice().reverse();
+  const act = mine();
+  $("bdA").hidden = !(online && fresh.length); $("bdA").textContent = fresh.length;
+  $("bdB").hidden = !act.length; $("bdB").textContent = act.length;
+  document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("on", b.dataset.f === filter));
+  let html = "";
+  if (filter === "avail") {
+    if (!online) html = empty("wallet", "r_offline_t", "r_offline_p");
+    else if (!fresh.length) html = empty("package", "r_none_t", "r_none_p");
+    else html = fresh.map((o) => {
+      const d = lastPos && o.dest ? `<dt>${esc(t("r_dist"))}</dt><dd>${esc(t("r_km", { km: eta(lastPos, o.dest, S.speedKmh).km.toFixed(1) }))}</dd>` : "";
+      return `<article class="card ocard">
+        <div class="ohead"><div><div class="ono">${esc(orderNo(o))}</div><div class="muted xs-t">${esc(agoT(o.createdAt))}</div></div><div class="flags">${typeTag(o)}</div></div>
+        <div class="items">${esc(o.items || "")}</div>
+        ${attachHtml(o)}
+        ${trustHtml(o, true)}
+        <dl class="meta"><dt>${esc(t(o.type === "pickup" ? "r_pick" : "r_shop"))}</dt><dd>${esc((o.type === "pickup" ? o.pickup : o.shop) || "-")}</dd>
+          <dt>${esc(t("r_to"))}</dt><dd>${esc([o.area, o.address].filter(Boolean).join(", "))}</dd>${d}
+          ${o.estimate ? `<dt>${esc(t("r_est"))}</dt><dd>${rs(o.estimate)}</dd>` : ""}<dt>${esc(t("r_fee"))}</dt><dd>${rs(o.fee)}</dd></dl>
+        <button class="btn block" data-a="accept" data-id="${esc(o.id)}">${esc(t("r_accept"))}</button></article>`;
+    }).join("");
+  } else if (filter === "active") {
+    html = act.length ? act.map(activeCard).join("") : empty("bolt", "r_noactive_t", "r_noactive_p");
+  } else {
+    const done = orders.filter((o) => o.riderId === me.id && o.status === "delivered");
+    const today = done.filter((o) => o.deliveredAt >= startOfToday());
+    const cashIn = done.reduce((s, o) => s + collected(o), 0) - settles.reduce((s, x) => s + num(x.amount), 0);
+    const rated = done.filter((o) => o.rating);
+    const avgR = rated.length ? (rated.reduce((s, o) => s + o.rating, 0) / rated.length).toFixed(1) : "-";
+    const acts = [...done.map((o) => ({ ts: o.deliveredAt, l: t("w_delivered", { no: orderNo(o) }), s: o.address, a: "+" + rs(collected(o)), neg: false })),
+      ...settles.map((x) => ({ ts: x.createdAt, l: t("w_deposit"), s: x.note || "", a: "-" + rs(x.amount), neg: true }))].sort((a, b) => b.ts - a.ts).slice(0, 25);
+    html = `<div class="walletcard"><small>${esc(t("w_cash"))}</small><b>${rs(Math.max(0, cashIn))}</b><small>${esc(t("w_cash_note"))}</small></div>
+      ${cashIn > S.cashLimit ? `<div class="banner">${icon("alert", 20)}<div>${esc(t("w_high"))}</div></div>` : ""}
+      <div class="stats3"><div class="stat"><b>${rs(today.length * S.riderShare)}</b><span>${esc(t("w_today"))}</span></div><div class="stat"><b>${today.length}</b><span>${esc(t("w_deliv"))}</span></div><div class="stat"><b>${avgR}</b><span>${esc(t("w_rating"))}</span></div></div>
+      <div class="card"><div class="sec-title" style="margin-bottom:6px">${esc(t("w_hist"))}</div>${acts.length ? acts.map((x) => `<div class="act"><div class="grow"><b>${esc(x.l)}</b><div class="muted xs-t">${esc(fmtDate(x.ts))}${x.s ? " · " + esc(x.s) : ""}</div></div><span class="amt ${x.neg ? "neg" : ""}">${esc(x.a)}</span></div>`).join("") : `<div class="muted sm-t">${esc(t("w_none"))}</div>`}</div>
+      <div class="locrow"><button class="btn sec" data-a="lang">${esc(t("lang_btn"))}</button><button class="btn sec" data-a="logout">${icon("logout", 16)} ${esc(t("logout"))}</button></div>`;
+  }
+  $("list").innerHTML = html;
+  hydrateMedia($("list"));
+  paintRiderMap();
+}
+
+// ---------------- rider ka apna map: rider + customers ke ghar, Kot Momin ka 5.5 km daira ----------------
+let rmapP = null;
+function paintRiderMap(onlyRider) {
+  const act = filter === "active" ? mine() : [];
+  const showMap = !!S && act.length > 0;
+  $("rmapCard").hidden = !showMap;
+  if (!showMap) return;
+  if (onlyRider && !rmapP) return;
+  if (!rmapP) rmapP = createMap($("rmap"), S, { controls: ["locate", "area", "full"], centreLabel: t("area_centre"), youLabel: t("map_you") }).catch(() => null);
+  rmapP.then((m) => {
+    if (!m) { $("rmapCard").hidden = true; return; }
+    m.setArea(S);
+    // Agla stop (jo saman le kar ja raha hai, warna pehla): rider se us tak line
+    const next = act.find((o) => o.status === "on_the_way" && o.dest) || act.find((o) => o.dest);
+    m.setMarkers(act.filter((o) => o.dest && o !== next).map((o) => ({ lat: o.dest.lat, lng: o.dest.lng, icon: "home", cls: "dest", key: o.id, label: orderNo(o) + " · " + o.name })), true);
+    m.update(lastPos ? { lat: lastPos.lat, lng: lastPos.lng, ts: Date.now() } : null, next ? next.dest : null);
+    $("rmapNote").textContent = next && lastPos ? t("r_km", { km: eta(lastPos, next.dest, S.speedKmh).km.toFixed(1) }) + " · " + orderNo(next) : "";
+  });
+}
+
+// Phone ka "back" button: Active/Wallet se wapas "New" tab, phir app band
+let tabBack = null;
+function setTab(f, fromBack) {
+  filter = f; render(); window.scrollTo({ top: 0 });
+  if (fromBack) return;
+  if (f === "avail") { if (tabBack) { const r = tabBack; tabBack = null; r(); } }
+  else if (!tabBack) tabBack = pushBack(() => { tabBack = null; setTab("avail", true); });
+}
+$("tabs").addEventListener("click", (e) => { const b = e.target.closest(".tab"); if (b) setTab(b.dataset.f); });
+$("list").addEventListener("input", (e) => {
+  const el = e.target;
+  if (el.dataset.bill) bills[el.dataset.bill] = el.value.replace(/[^\d]/g, "");
+  if (el.dataset.code) codes[el.dataset.code] = el.value.replace(/[^\d]/g, "").slice(0, 4);
+});
+$("list").addEventListener("change", async (e) => {
+  const el = e.target;
+  if (!el.dataset.photo || !el.files?.[0]) return;
+  try { photos[el.dataset.photo] = await compressImage(el.files[0]); render(); } catch { toast(t("r_net")); }
+});
+
+$("list").addEventListener("click", async (e) => {
+  const b = e.target.closest("button[data-a]");
+  if (!b) return;
+  const id = b.dataset.id, a = b.dataset.a;
+  const o = orders.find((x) => x.id === id);
+  try {
+    if (a === "lang") return switchLang();
+    if (a === "logout") return logout();
+    if (a === "accept") {
+      if (mine().length >= S.maxActivePerRider) return toast(t("r_max", { n: S.maxActivePerRider }));
+      b.disabled = true;
+      const ok = await claimOrder(id, { id: me.id, name: me.name, phone: me.phone });
+      if (!ok) return toast(t("r_taken"));
+      setTab("active"); lastPush = 0;
+      toast(t("r_accepted"));
+    }
+    if (a === "confirm") await update("orders", id, { confirmedAt: Date.now() });
+    if (a === "arrived") { await update("orders", id, { arrivedAt: Date.now(), arrivedLoc: lastPos ? { lat: lastPos.lat, lng: lastPos.lng } : null }); toast(t("r_arrived_ok")); }
+    if (a === "pick" && o) {
+      const patch = { status: "on_the_way", pickedAt: Date.now(), pickedLoc: lastPos ? { lat: lastPos.lat, lng: lastPos.lng } : null };
+      if (o.type !== "pickup") {
+        const raw = bills[id];
+        if (!raw) return toast(t("r_e_bill"));
+        const bill = num(raw);
+        if (!photos[id]) return toast(t("r_e_photo"));
+        if (o.estimate && bill > o.estimate * 1.5 + 200) {
+          if (!(await askYes(t("r_high_q", { est: rs(o.estimate) })))) return;
+          patch.billOverEstimate = true;
+        }
+        Object.assign(patch, { bill, receiptId: photos[id] ? await putMedia("receipt", photos[id]) : "" });
+      }
+      await update("orders", id, patch);
+    }
+    if (a === "done" && o) {
+      const code = codes[id] || "";
+      if (o.otpHash && otpHash(o.no, code) !== o.otpHash) {
+        update("orders", id, { codeFails: (o.codeFails || 0) + 1 }).catch(() => {});
+        return toast(t("r_badcode"));
+      }
+      await update("orders", id, { status: "delivered", deliveredAt: Date.now(), arrivedAt: o.arrivedAt || Date.now(), otpOk: o.otpHash ? "code" : "none", deliveredLoc: lastPos ? { lat: lastPos.lat, lng: lastPos.lng } : null });
+      delete codes[id]; delete bills[id]; delete photos[id];
+      toast(t("r_done"));
+    }
+    if (a === "problem" && o) {
+      const keys = ["r_prob_1", "r_prob_2", "r_prob_3", "r_prob_4", "r_prob_5"];
+      const k = await askChoice(t("r_prob_q") + " " + t("r_sos_note"), keys.map((x) => ({ label: t(x), value: x })));
+      if (!k) return;
+      const at = Date.now(), loc = lastPos ? { lat: lastPos.lat, lng: lastPos.lng } : null;
+      await update("orders", id, { status: "failed", failedAt: at, failReason: DICT.en[k], failLoc: loc, emergency: k === "r_prob_5" });
+      if (k === "r_prob_5") await add("alerts", { type: "rider_sos", orderId: id, no: o.no, rider: me.name, riderPhone: me.phone, phone: o.phone, name: o.name, device: o.device || "", ip: o.ip || "", lat: loc?.lat ?? null, lng: loc?.lng ?? null, reason: "Rider reported robbery or threat", seen: false, ts: at });
+      toast(t("r_prob_ok"));
+    }
+    if (a === "chat" && o) openChat({ orderId: id, role: "rider", name: me.name, title: o.name, subtitle: orderNo(o) });
+  } catch (err) { console.error(err); toast(t("r_net")); }
+});
+
+// ---------------- start / sign in ----------------
+function logout(msgKey) {
+  stopTracking();
+  if (me) update("riders", me.id, { online: false, lastSeen: Date.now() }).catch(() => {});
+  kv.removeItem("kmd_rider_me");
+  if (msgKey) kv.setItem("kmd_rider_msg", msgKey);
+  location.reload();
+}
+// Naya order: 20 second baad dobara awaz (zyada se zyada 3 dafa) jab tak koi rider na le
+let nagT = null, nagN = 0;
+function startNag() {
+  nagN = 0;
+  clearInterval(nagT);
+  nagT = setInterval(() => {
+    const avail = orders.filter((o) => o.status === "new").length;
+    if (!online || !avail || mine().length >= S.maxActivePerRider || ++nagN > 3) { clearInterval(nagT); nagT = null; return; }
+    beep();
+  }, 20000);
+}
+function start() {
+  if (started) return;
+  started = true;
+  $("login").hidden = true; $("app").hidden = false;
+  $("meName").textContent = me.name;
+  $("meAv").textContent = initials(me.name);
+  if (!cloud) $("simRow").hidden = false;
+  paintOnline(); pushStatus(); setGps("gps_idle");
+  setInterval(pushStatus, 30000);
+  watchOne("riders", me.id, (r) => { if (!r) logout("r_bad"); else if (r.active === false) logout("r_suspended"); });
+  watch("settlements", (list) => { settles = list; safeRender(); }, ["riderId", me.id]);
+  // Sirf zaroori orders: naye (sab riders ke liye) aur is rider ke apne. Puri history har dafa download nahi hoti.
+  let newList = [], myList = [], gotNew = false;
+  const merged = () => { const m = new Map(); newList.forEach((o) => m.set(o.id, o)); myList.forEach((o) => m.set(o.id, o)); return [...m.values()].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)); };
+  const after = () => { orders = merged(); safeRender(); syncTracking(); if (lastPos) pushLoc(lastPos); loadHistories(); };
+  watch("orders", (list) => {
+    newList = list;
+    const n = list.length;
+    if (gotNew && online && n > lastNew) { beep(); toast(t("new_order_toast")); startNag(); }
+    gotNew = true; lastNew = n;
+    after();
+  }, ["status", "new"]);
+  watch("orders", (list) => { myList = list; after(); }, ["riderId", me.id]);
+  setInterval(idleLoc, 90000);
+  setTimeout(idleLoc, 3000);
+}
+
+const prevMsg = kv.getItem("kmd_rider_msg");
+if (prevMsg) { $("loginErr").textContent = t(prevMsg); kv.removeItem("kmd_rider_msg"); }
+$("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("loginErr").textContent = "";
+  const phone = norm($("phone").value), pin = $("pin").value.trim();
+  try {
+    const list = await getWhere("riders", "phone", phone);
+    const r = list.find((x) => x.pinHash === riderHash(phone, pin));
+    if (!r) { $("loginErr").textContent = t("r_bad"); $("pin").value = ""; return; }
+    if (r.active === false) { $("loginErr").textContent = t("r_suspended"); return; }
+    me = { id: r.id, name: r.name, phone: r.phone };
+    kv.setItem("kmd_rider_me", JSON.stringify(me));
+    start();
+  } catch { $("loginErr").textContent = t("r_neterr"); }
+});
+
+if (me) start();
+if ("serviceWorker" in navigator && location.protocol.startsWith("http") && !inApp()) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
