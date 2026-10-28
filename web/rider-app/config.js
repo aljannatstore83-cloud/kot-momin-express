@@ -13,8 +13,8 @@ window.KMX_CONFIG = {
   "DEFAULTS": {
     "appName": "Kot Momin Express",
     "adminPinHash": "4430b87e1aed696fcae0b85bdb80dce2334db344a55c47b5d33dd6d7a8fb9eb2",
-    "supportPhone": "03001234567",
-    "supportWhatsapp": "923001234567",
+    "supportPhone": "03457792869",
+    "supportWhatsapp": "923457792869",
     "deliveryFee": 100,
     "riderShare": 70,
     "newCustomerLimit": 3000,
