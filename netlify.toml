@@ -1,0 +1,12 @@
+# Netlify: website seedha "web" folder se chalti hai (koi build nahi).
+# Netlify ko is GitHub repo se jor dein: phir har update khud live ho jati hai (website aur APK dono par).
+[build]
+  publish = "web"
+  # Sirf tab naya deploy jab website (web/) badle. APK ya doosri files badalne par Netlify ke credits bachte hain.
+  ignore = "[ \"$CACHED_COMMIT_REF\" != \"$COMMIT_REF\" ] && git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- web/ netlify.toml"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

@@ -1,8 +1,15 @@
 name: Build Android APKs
 
+# APK sirf tab dobara banti hai jab launcher, icon ya build script badle.
+# Website (web/) ki har update phones par khud pohanchti hai, APK ki zaroorat nahi.
 on:
   push:
     branches: [main]
+    paths:
+      - "scripts/**"
+      - "icons/**"
+      - "keys/**"
+      - ".github/workflows/build-apk.yml"
   workflow_dispatch:
 
 jobs:

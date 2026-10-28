@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="kmx-version" content="2026.10.28-0507">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0B7A4B">
 <title>Kot Momin Express</title>
@@ -23,10 +24,39 @@
   <div class="ring" data-icon="pin" data-size="42"></div>
   <h1 id="gTitle"></h1>
   <p id="gText"></p>
+  <div id="gMap" class="map gmap" hidden></div>
   <div class="msg" id="gMsg" role="status" hidden></div>
   <button class="btn" id="gBtn" type="button"></button>
   <button class="btn ghostw" id="gDemo" type="button" hidden data-t="gate_demo"></button>
   <div class="note" data-t="gate_note"></div>
+</div>
+
+<!-- KYC: shuru mein aik dafa shanakhti card se tasdeeq (admin 24 ghante mein check karta hai) -->
+<div id="kyc" class="kycwrap" hidden>
+  <header class="appbar">
+    <div class="brand"><span class="logo" data-icon="truck" data-size="20"></span><div><b id="kBrand"></b><small data-t="brand_tag"></small></div></div>
+    <button class="langbtn" id="kLang" type="button" data-t="lang_btn"></button>
+  </header>
+  <main class="content">
+    <div class="kychero">
+      <div class="kring" data-icon="idcard" data-size="30"></div>
+      <div><h1 data-t="kyc_title"></h1><p id="kIntro"></p></div>
+    </div>
+    <div class="banner red" id="kRej" hidden></div>
+    <form id="kform" class="card form" novalidate autocomplete="off">
+      <div class="field"><label for="kName" data-t="kyc_name"></label><input id="kName" autocomplete="name" required></div>
+      <div class="field"><label for="kCnic" data-t="kyc_cnic"></label><input id="kCnic" inputmode="numeric" placeholder="12345-1234567-1" maxlength="15" dir="ltr" required></div>
+      <div class="field"><label for="kPhone" data-t="kyc_phone"></label><input id="kPhone" type="tel" inputmode="tel" placeholder="03xx xxxxxxx" autocomplete="tel" dir="ltr" required><div class="hint" data-t="kyc_phone_hint"></div></div>
+      <div class="field"><label for="kArea" data-t="kyc_home"></label><select id="kArea"></select><input id="kAddress" data-tp="f_address_ph" aria-label="Address" style="margin-top:8px"></div>
+      <div class="sec-title" data-t="kyc_photos"></div>
+      <div class="kphotos" id="kPhotos"></div>
+      <label class="kagree"><input type="checkbox" id="kAgree"><span data-t="kyc_consent"></span></label>
+      <div class="hint" style="display:flex;gap:8px"><span data-icon="lock" data-size="15"></span><span data-t="kyc_secure"></span></div>
+      <div class="err" id="kErr" role="alert"></div>
+      <button class="btn block" id="kSend" type="submit" data-t="kyc_submit"></button>
+      <a class="btn ghost block" id="kHelp"><span data-icon="phone" data-size="15"></span><span data-t="kyc_help"></span></a>
+    </form>
+  </main>
 </div>
 
 <div class="app" id="app" hidden>
@@ -44,8 +74,9 @@
     <!-- HOME -->
     <section id="v-home" class="stack">
       <div class="greet"><h1 id="hello"></h1><p data-t="home_q"></p></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="locchip"><span data-icon="pin" data-size="14"></span><span data-t="loc_chip"></span></span><span id="trustHome"></span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="locchip"><span data-icon="pin" data-size="14"></span><span data-t="loc_chip"></span></span><span id="kycChip"></span><span id="trustHome"></span></div>
       <div id="closedBox"></div>
+      <div id="kycBox"></div>
       <div class="cats" id="cats"></div>
       <button class="wide" id="parcelBtn" type="button">
         <span class="ci c6" data-icon="package" data-size="22"></span>
@@ -57,6 +88,11 @@
         <div class="sec-title" data-t="how_title"></div>
         <div class="how"><div><b>1</b><span data-t="how1"></span></div><div><b>2</b><span data-t="how2"></span></div><div><b>3</b><span data-t="how3"></span></div></div>
         <div class="hint" id="feeNote"></div>
+      </div>
+      <div class="card areacard stack">
+        <div class="row"><b data-t="area_title"></b><span class="flag green" id="areaKm"></span></div>
+        <div id="amap" class="map amap"></div>
+        <div class="hint" id="areaTxt"></div>
       </div>
     </section>
 
@@ -87,6 +123,7 @@
           <div class="field"><label for="name" data-t="f_name"></label><input id="name" required autocomplete="name"></div>
           <div class="field"><label for="phone" data-t="f_phone"></label><input id="phone" type="tel" inputmode="tel" required placeholder="03xx xxxxxxx" autocomplete="tel"></div>
         </div>
+        <div class="hint ok" id="phoneLock" hidden style="display:flex;gap:6px;align-items:center"><span data-icon="idcard" data-size="15"></span><span data-t="kyc_phone_locked"></span></div>
         <div class="field"><label for="note"><span data-t="f_note"></span> <span class="opt" data-t="optional"></span></label><input id="note" data-tp="f_note_ph"></div>
         <div class="summary">
           <div class="row"><span data-t="sum_fee"></span><b id="sFee"></b></div>
@@ -151,6 +188,7 @@
 
     <!-- ACCOUNT -->
     <section id="v-account" class="stack" hidden>
+      <div class="card trustcard" id="kycCard" hidden></div>
       <div class="card trustcard" id="trustCard"></div>
       <form id="pform" class="card form">
         <b data-t="acc_profile"></b>
@@ -175,6 +213,7 @@
       </form>
       <div class="card" id="instCard"><b data-t="install"></b><p class="installhint" style="margin-top:4px" data-t="install_hint"></p></div>
       <div class="card"><b data-t="privacy_title"></b><p class="muted sm-t" style="margin-top:4px" data-t="privacy_text"></p></div>
+      <p class="muted xs-t" style="text-align:center" id="verTxt"></p>
     </section>
   </main>
 

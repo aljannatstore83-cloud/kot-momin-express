@@ -1,0 +1,33 @@
+name: Screenshots (maps with real internet)
+
+# Sirf "preview" branch par: asli internet ke saath map aur screens ki tasveerein (demo data).
+on:
+  push:
+    branches: [preview]
+  workflow_dispatch:
+
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install browser
+        run: pip install playwright==1.48.0 && python -m playwright install --with-deps chromium
+      - name: Take screenshots
+        run: python tests/screens.py
+      - name: Save screenshots to the test-shots branch
+        if: always()
+        run: |
+          set -e
+          mkdir -p shots && mkdir shotsbranch && cd shotsbranch
+          git init -q && git checkout -q -b test-shots
+          cp ../shots/* . 2>/dev/null || true
+          echo "From ${GITHUB_SHA} on $(date -u)" > INFO.txt
+          git add -A
+          git -c user.name="github-actions" -c user.email="github-actions@users.noreply.github.com" commit -q -m "Screenshots ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" test-shots

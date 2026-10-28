@@ -1,5 +1,5 @@
 // Network-first service worker: online ho to hamesha taza files, offline ho to cache
-const CACHE = "customer-app-v6";
+const CACHE = "customer-app-v7";
 const FILES = ["./", "index.html", "config.js", "app.js", "app.css", "manifest.json", "icon-192.png", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png"];
 
 self.addEventListener("install", (e) => {

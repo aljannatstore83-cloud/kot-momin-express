@@ -1,11 +1,13 @@
 # Kot Momin Express
 
-Customer aur Rider ki Android apps (APK) yahan GitHub par khud banti hain.
+Kot Momin (Punjab) ki delivery service: customer app, rider app aur admin panel.
 
-- `web/customer-app`: customer app
-- `web/rider-app`: rider app
-- `web/admin-web`: admin (abhi web version)
-- `web/index.html`: teeno apps ka shuruati page (Netlify par daalne ke liye)
+- `web/`: live website (Netlify isi folder ko chalata hai). Yahan update = sab phones par update
+- `web/customer-app`, `web/rider-app`, `web/admin-web`: teeno apps
+- `live.json`: Android apps yahan se dekhti hain ke live website kahan hai
+- `scripts/launcher.html` + `scripts/build-apk.sh`: Android APK (chhota launcher jo live website kholta hai)
+- `tests/screens.py`: `preview` branch par asli internet ke saath screenshots (`test-shots` branch)
+- `firestore.rules`: Firebase database ke rules
 
-Har dafa code update hone par **Actions** tab mein "Build Android APKs" chalta hai aur
-`KotMomin-customer-apk` aur `KotMomin-rider-apk` files ban jati hain.
+APK sirf tab dobara banti hai jab launcher, icon ya build script badle (Actions > "Build Android APKs").
+Bani hui APK files `apk-builds` branch par hoti hain.

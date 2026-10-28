@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0E1A14">
+<title>__NAME__</title>
+<style>
+  /* APK ka chhota sa darwaza: yeh sirf LIVE website kholta hai. Asal app website par hai, isliye har update khud aa jati hai. */
+  html,body{margin:0;height:100%;background:#0E1A14;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .w{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;box-sizing:border-box;text-align:center}
+  img{width:84px;height:84px;border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  h1{font-size:20px;margin:6px 0 0;font-weight:800}
+  p{margin:0;opacity:.88;font-size:14px;max-width:32ch;line-height:1.5}
+  .ur{direction:rtl;line-height:2}
+  .sp{width:28px;height:28px;border-radius:50%;border:3px solid rgba(255,255,255,.25);border-top-color:#fff;animation:r .9s linear infinite;margin:6px auto 0}
+  @keyframes r{to{transform:rotate(360deg)}}
+  button{margin-top:10px;background:#fff;color:#085C39;border:0;border-radius:12px;font-weight:800;font-size:15px;padding:13px 26px}
+  #off{display:flex;flex-direction:column;align-items:center;gap:8px}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="w">
+  <img src="icon.png" alt="">
+  <h1>__NAME__</h1>
+  <div id="load"><div class="sp"></div></div>
+  <div id="off" hidden>
+    <p><b>No internet connection</b><br>Turn on mobile data or Wi-Fi, then try again.</p>
+    <p class="ur">انٹرنیٹ نہیں ہے۔ موبائل ڈیٹا یا وائی فائی آن کریں اور دوبارہ کوشش کریں۔</p>
+    <button id="retry" type="button">Try again · دوبارہ کوشش</button>
+  </div>
+</div>
+<script>
+(function () {
+  var APP = "__APP__", DEF = "__URL__";
+  // Live app ka pata GitHub par (live.json). Hosting badalni ho to sirf woh file badlo, APK dobara nahi.
+  var CFG = "__CFG__";
+  var OK = /^https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)*\.(netlify\.app|pages\.dev|web\.app|firebaseapp\.com)\//;
+  function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function put(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function show(off) { document.getElementById("load").hidden = off; document.getElementById("off").hidden = !off; }
+  function limit(p, ms) {
+    return new Promise(function (res, rej) {
+      var t = setTimeout(function () { rej(new Error("timeout")); }, ms);
+      p.then(function (v) { clearTimeout(t); res(v); }, function (e) { clearTimeout(t); rej(e); });
+    });
+  }
+  function pickUrl() {
+    var saved = get("kmx_live_" + APP);
+    var fallback = saved && OK.test(saved) ? saved : DEF;
+    if (!window.fetch || !window.Promise) return { then: function (f) { f(fallback); } };
+    return limit(fetch(CFG + "?t=" + Math.floor(Date.now() / 300000), { cache: "no-store" }).then(function (r) { return r.json(); }), 2500)
+      .then(function (j) { var u = j && j[APP]; if (typeof u === "string" && OK.test(u)) { put("kmx_live_" + APP, u); return u; } return fallback; })
+      .catch(function () { return fallback; });
+  }
+  function go() {
+    show(false);
+    pickUrl().then(function (u) {
+      if (!window.fetch) { location.replace(u); return; }
+      limit(fetch(u, { mode: "no-cors", cache: "no-store" }), 9000).then(function () { location.replace(u); }, function () { show(true); });
+    });
+  }
+  document.getElementById("retry").onclick = go;
+  go();
+})();
+</script>
+</body>
+</html>

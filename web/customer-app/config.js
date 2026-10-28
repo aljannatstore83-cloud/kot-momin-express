@@ -29,13 +29,15 @@ window.KMX_CONFIG = {
       "lat": 32.18833,
       "lng": 73.02861
     },
-    "radiusKm": 3,
+    "radiusKm": 5.5,
     "areas": [
       "Chanab Bazar",
       "Rehmat Market",
       "Sargodha Road",
       "Phularwan Road"
     ],
-    "speedKmh": 20
+    "speedKmh": 20,
+    "kycMode": "wait",
+    "kycHours": 24
   }
 };

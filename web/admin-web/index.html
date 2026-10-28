@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="kmx-version" content="2026.10.28-0507">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0E1A14">
 <meta name="robots" content="noindex">
@@ -37,6 +38,7 @@
     <div class="foot">
       <button id="installBtn" class="btn sec sm" type="button" hidden data-icon="download" data-size="16">Install app</button>
       <button id="logout" class="btn sec sm" type="button" data-icon="logout" data-size="16">Sign out</button>
+      <small id="verTxt" style="opacity:.55;font-size:11px"></small>
     </div>
   </aside>
   <div class="main">
@@ -61,6 +63,12 @@
       <section id="v-customers" class="stack" hidden>
         <div class="toolbar"><div class="chips" id="cufilter"></div><input class="search" id="cusearch" type="search" placeholder="Search name, phone, IP, device" aria-label="Search customers"></div>
         <div class="panel"><div class="tbl" id="cuTbl"></div></div>
+      </section>
+
+      <section id="v-kyc" class="stack" hidden>
+        <div id="kycTop"></div>
+        <div class="toolbar"><div class="chips" id="kfilter"></div><input class="search" id="ksearch" type="search" placeholder="Search name, phone, device, CNIC" aria-label="Search KYC"></div>
+        <div class="panel"><div class="tbl" id="kTbl"></div></div>
       </section>
 
       <section id="v-riders" class="stack" hidden>
@@ -129,6 +137,10 @@
             <div class="field"><label for="s_maxActivePerCustomer">Max open orders per customer</label><input id="s_maxActivePerCustomer" type="number" min="1"></div>
             <div class="field"><label for="s_maxActivePerRider">Max orders a rider can carry</label><input id="s_maxActivePerRider" type="number" min="1"></div>
           </div></div>
+          <div class="panel"><header><h2>KYC (customer verification)</h2><span class="muted sm-t">New customers send their CNIC (front and back) and a selfie once. You review them in the KYC tab.</span></header><div class="body setgrid">
+            <div class="field"><label for="s_kycMode">Ordering before approval</label><select id="s_kycMode"><option value="wait">Customers can order only after you approve (recommended)</option><option value="allow">Customers can order while you review</option><option value="off">KYC off (no CNIC needed)</option></select></div>
+            <div class="field"><label for="s_kycHours">You promise to check KYC within (hours)</label><input id="s_kycHours" type="number" min="1" max="72"></div>
+          </div></div>
           <div class="panel"><header><h2>Service area (Kot Momin)</h2></header><div class="body stack">
             <div class="setgrid">
               <div class="field"><label for="s_lat">Centre latitude</label><input id="s_lat" type="number" step="0.00001"></div>
@@ -137,7 +149,8 @@
               <div class="field"><label for="s_speedKmh">Average rider speed (km/h)</label><input id="s_speedKmh" type="number" min="5"></div>
             </div>
             <div class="field"><label for="s_areas">Areas / mohallas customers can pick (one per line)</label><textarea id="s_areas" rows="6"></textarea></div>
-            <div class="hint">Customers outside this circle cannot open the app or place orders. Centre defaults to Kot Momin city centre (32.18833 N, 73.02861 E).</div>
+            <div><button class="btn sec sm" type="button" id="useHere" data-icon="target" data-size="16">Use my current location as the centre</button></div>
+            <div class="hint">The service area is a circle: the same distance (radius) from the centre in every direction. Customers outside it cannot open the app or place orders. Default: 5.5 km around Kot Momin city centre (32.18833 N, 73.02861 E). Stand at the middle of the city and press the button above to set the centre exactly.</div>
           </div></div>
           <div class="panel"><header><h2>Admin PIN</h2></header><div class="body setgrid">
             <div class="field"><label for="s_pin1">New admin PIN (6 to 8 digits)</label><input id="s_pin1" type="password" inputmode="numeric" placeholder="Leave empty to keep"></div>
